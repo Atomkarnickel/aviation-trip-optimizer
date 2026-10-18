@@ -69,7 +69,8 @@ def build_connection(ref: ReferenceData, prev: Segment, nxt: Segment, ticketing:
                       risk=risk, note=note)
 
 
-def build_leg(ref: ReferenceData, direction: str, segments: list[Segment], ticketing: Ticketing) -> Leg:
+def build_leg(ref: ReferenceData, direction: str, segments: list[Segment], ticketing: Ticketing,
+              reported_stops: int | None = None) -> Leg:
     if not segments:
         raise InvalidItinerary("Leere Teilstrecke")
     connections = [build_connection(ref, a, b, ticketing) for a, b in zip(segments, segments[1:], strict=False)]
@@ -86,8 +87,12 @@ def build_leg(ref: ReferenceData, direction: str, segments: list[Segment], ticke
     detour = None
     if direct and all(d is not None for d in flown) and direct > 0:
         detour = round(sum(flown) / direct, 2)  # type: ignore[arg-type]
+    incomplete = reported_stops is not None and reported_stops != len(segments) - 1
+    if incomplete:
+        detour = None  # Umsteigeflughäfen unbekannt – kein Umwegfaktor berechenbar
     return Leg(direction=direction, segments=segments, connections=connections,
-               duration_minutes=duration, detour_ratio=detour)
+               duration_minutes=duration, detour_ratio=detour, details_complete=not incomplete,
+               reported_stops=reported_stops if incomplete else None)
 
 
 def itinerary_id(provider: str, legs: list[list[Segment]], total: float) -> str:
@@ -121,9 +126,11 @@ def build_itinerary(
     offer_expires_at: datetime | None = None,
     notes: list[str] | None = None,
     booking_options: list[BookingOption] | None = None,
+    outbound_stops: int | None = None,
+    inbound_stops: int | None = None,
 ) -> Itinerary:
-    out_leg = build_leg(ref, "outbound", outbound, ticketing)
-    in_leg = build_leg(ref, "inbound", inbound, ticketing)
+    out_leg = build_leg(ref, "outbound", outbound, ticketing, outbound_stops)
+    in_leg = build_leg(ref, "inbound", inbound, ticketing, inbound_stops)
 
     arrival = outbound[-1]
     departure_back = inbound[0]
@@ -144,6 +151,8 @@ def build_itinerary(
             aircraft.append(seg.aircraft_type_id)
 
     data_notes = list(notes or [])
+    if not (out_leg.details_complete and in_leg.details_complete):
+        data_notes.append("Umsteigeflughäfen und Anschlussflüge vom Provider nicht übermittelt – vor Buchung prüfen.")
     if any(s.aircraft_type_id is None for s in outbound + inbound):
         data_notes.append("Für mindestens ein Segment ist kein Flugzeugtyp bekannt.")
     if any(s.departure_utc is None for s in outbound + inbound):

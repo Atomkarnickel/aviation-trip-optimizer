@@ -87,7 +87,7 @@ object Format {
     val PRICE_SOURCE = mapOf(
         "live_offer" to "Live-Angebot",
         "test_offer" to "Testmodus – kein echter Preis",
-        "estimated" to "Schätzung – nicht buchbar",
+        "estimated" to "Geschätzt – zwischengespeicherter Preis (bis ca. 7 Tage alt)",
         "demo" to "DEMO – fiktive Daten",
     )
     val AIRCRAFT_STATUS = mapOf("confirmed" to "bestätigt", "scheduled" to "geplant", "historical" to "historisch", "unknown" to "unbekannt")

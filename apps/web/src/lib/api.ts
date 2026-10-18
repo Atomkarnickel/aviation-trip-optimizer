@@ -1,4 +1,5 @@
 import type {
+  AircraftHistory,
   AircraftType,
   Airport,
   CompareResponse,
@@ -36,7 +37,7 @@ export class ApiClient {
   constructor(
     private readonly baseUrl: string,
     private readonly fetcher: typeof fetch = (...args) => fetch(...args),
-    private readonly timeoutMs = 60000,
+    private readonly timeoutMs = 90000,
   ) {}
 
   get configured(): boolean {
@@ -80,6 +81,10 @@ export class ApiClient {
 
   meta() {
     return this.request<MetaResponse>("/meta");
+  }
+  aircraftHistory(carrier: string, flightNumber: string, origin: string, days = 5) {
+    const q = new URLSearchParams({ carrier, flight_number: flightNumber, origin, days: String(days) });
+    return this.request<AircraftHistory>(`/aircraft-history?${q.toString()}`);
   }
   modes() {
     return this.request<Record<string, Weights>>("/modes");

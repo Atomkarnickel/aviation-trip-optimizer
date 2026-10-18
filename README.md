@@ -30,15 +30,23 @@ Die Webversion wird über GitHub Pages bereitgestellt; die Adresse steht hier, s
 | Optimierung | Modi **Best Value**, **Aircraft Hunter**, **Cheapest Trip**; frei einstellbare Gewichtung (Preis, Flugzeug, Reisezeit, Umstiege, Aufenthalt, Airline, Komfort) mit Neubewertung ohne neue Suche |
 | Ergebnisse | Gesamtpreis + Bestandteile, Daten, Airline/Flugnummer, Umstiege mit Risiko, Reise- und Aufenthaltsdauer, Flugzeugtyp je Segment (geplant/bestätigt), Score-Aufschlüsselung, Begründung, Kompromisse, Wunschflugzeug-Aufpreis, bessere Preis-Leistungs-Alternative, Unsicherheiten, Datenaktualität, Buchungslink (offizielle Airline-Website) |
 | Vergleich | 2–4 Reisen nebeneinander, bester Wert je Kriterium markiert |
+| Preiskalender | Heatmap: günstigster erhaltener Preis je Abflugtag × Aufenthaltsdauer; Klick filtert die Ergebnisse |
+| Typverlauf | pro Flugnummer: welche Flugzeugtypen sie in den letzten Tagen tatsächlich geflogen ist (OpenSky + hexdb.io) |
 | Flugzeuge | kuratierter Katalog (A380, 747, A340, A350, 787, A330, 757, ATR 72 …; historische Typen wie DC-10 nur als Katalogeintrag), persönliche Markierung (Wunschliste / geflogen / uninteressant) und eigene Coolness-Bewertung |
 | Favoriten & Logbuch | lokal gespeichert (Android: Room/DataStore, Web: localStorage), kein Konto nötig |
 | About | installierte/laufende Version, neueste stabile APK (GitHub Releases API), Update-Status, direkter APK-Download mit Prüfsumme |
 
-**Ehrliche Daten:** Ohne konfigurierten Flugdaten-Provider zeigt die App keine Ergebnisse an, statt welche zu erfinden. Demo- und Testdaten sind deutlich gekennzeichnet. Flugzeugtypen gelten als *geplant*, nicht garantiert.
+**Ehrliche Daten:** Ohne konfigurierten Flugdaten-Provider zeigt die App keine Ergebnisse an, statt welche zu erfinden. Geschätzte, Demo- und Testdaten sind deutlich gekennzeichnet. Fehlende Angaben (Umsteigeflughafen, Flugzeugtyp) erscheinen als „unbekannt“. Flugzeugtypen gelten höchstens als *geplant* bzw. *historisch beobachtet*, nie als garantiert.
 
-## Flugdaten
+## Datenquellen – komplett kostenlos
 
-Primärer Provider ist die **Duffel Flights API** (Live-Angebote inkl. Flugzeugtyp je Segment). Die Amadeus Self-Service APIs wurden im Juli 2026 abgeschaltet. Details, Kosten, Alternativen (FlightAware, Cirium) und Einrichtung: [docs/PROVIDERS.md](docs/PROVIDERS.md).
+| Zweck | Quelle |
+|---|---|
+| Preise | Travelpayouts / Aviasales Data API (kostenlos, zwischengespeicherte Preise → als **geschätzt** gekennzeichnet) |
+| Flugzeugtyp-Verlauf | OpenSky Network (kostenloses Konto) + hexdb.io |
+| Hosting | GitHub Pages (Web), GitHub Releases (APK), Render Free (Backend, SQLite) |
+
+Optional: Duffel (Sandbox kostenlos). Die Amadeus Self-Service APIs wurden im Juli 2026 abgeschaltet. Details und Einrichtung: [docs/PROVIDERS.md](docs/PROVIDERS.md), [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 ## Schnellstart
 

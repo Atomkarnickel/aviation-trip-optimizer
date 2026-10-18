@@ -1,17 +1,24 @@
 "use client";
 
 import { useState } from "react";
+import { AircraftHistoryPanel } from "@/components/AircraftHistoryPanel";
 import { aircraftName } from "@/lib/aircraft";
+import type { ApiClient } from "@/lib/api";
 import { AIRCRAFT_STATUS_LABEL, PRICE_SOURCE_LABEL, dateShort, dateTime, duration, money, timeLocal } from "@/lib/format";
 import type { Leg, ScoredItinerary } from "@/lib/types";
 
-function LegView({ leg }: { leg: Leg }) {
+function LegView({ leg, api, wishlist }: { leg: Leg; api?: ApiClient; wishlist: string[] }) {
   return (
     <div className="leg">
       <h3>
         {leg.direction === "outbound" ? "Hinflug" : leg.direction === "inbound" ? "Rückflug" : "Weiterflug"} ·{" "}
         <span className="muted">{duration(leg.duration_minutes)}</span>
       </h3>
+      {!leg.details_complete && (
+        <div className="connection risk-tight">
+          {leg.reported_stops} Umstieg(e) – Umsteigeflughafen und Anschlussflug vom Provider nicht übermittelt.
+        </div>
+      )}
       {leg.segments.map((s, i) => (
         <div key={i}>
           <div className="segment">
@@ -25,7 +32,7 @@ function LegView({ leg }: { leg: Leg }) {
               <strong>
                 {s.origin} → {s.destination}
               </strong>{" "}
-              · {s.marketing_carrier} {s.flight_number}
+              · {s.marketing_carrier}{s.flight_number ? ` ${s.flight_number}` : " (Flugnummer unbekannt)"}
               {s.marketing_carrier_name ? ` (${s.marketing_carrier_name})` : ""}
               {s.operating_carrier && s.operating_carrier !== s.marketing_carrier ? ` · durchgeführt von ${s.operating_carrier_name ?? s.operating_carrier}` : ""}
               <br />
@@ -33,6 +40,9 @@ function LegView({ leg }: { leg: Leg }) {
                 {s.aircraft_type_id ? aircraftName(s.aircraft_type_id) : s.aircraft_name ?? "Flugzeugtyp unbekannt"} ·{" "}
                 {AIRCRAFT_STATUS_LABEL[s.aircraft_status ?? "unknown"]} · {duration(s.duration_minutes)}
               </span>
+              {api && s.flight_number && (
+                <AircraftHistoryPanel api={api} carrier={s.marketing_carrier} flightNumber={s.flight_number} origin={s.origin} wishlist={wishlist} />
+              )}
             </div>
           </div>
           {leg.connections?.[i] && (
@@ -55,9 +65,11 @@ interface Props {
   onToggleCompare: () => void;
   compareDisabled: boolean;
   betterAlternativeRank?: number;
+  api?: ApiClient;
+  wishlist?: string[];
 }
 
-export function ResultCard({ item, favorite, onToggleFavorite, compareSelected, onToggleCompare, compareDisabled, betterAlternativeRank }: Props) {
+export function ResultCard({ item, favorite, onToggleFavorite, compareSelected, onToggleCompare, compareDisabled, betterAlternativeRank, api, wishlist = [] }: Props) {
   const [open, setOpen] = useState(item.rank <= 1);
   const it = item.itinerary;
   const out = it.legs[0];
@@ -74,7 +86,7 @@ export function ResultCard({ item, favorite, onToggleFavorite, compareSelected, 
             <span>{it.stops === 0 ? "Nonstop" : `${it.stops} Umstieg(e)`}</span>
             <span>{duration(it.total_travel_minutes)} Flugreisezeit</span>
             <span>{it.full_stay_days} volle Tage vor Ort</span>
-            <span>{it.airlines.join(", ")} {out.segments[0].flight_number && `· ${out.segments[0].marketing_carrier} ${out.segments[0].flight_number}`}</span>
+            <span>{it.airlines.join(", ")} {out.segments[0].flight_number ? `· ${out.segments[0].marketing_carrier} ${out.segments[0].flight_number}` : ""}</span>
           </div>
           <div className="row" style={{ gap: 6, marginTop: 6 }}>
             {it.is_demo && <span className="chip demo">DEMO</span>}
@@ -139,7 +151,7 @@ export function ResultCard({ item, favorite, onToggleFavorite, compareSelected, 
           </div>
 
           <div className="grid-2">
-            {it.legs.map((leg, i) => <LegView key={i} leg={leg} />)}
+            {it.legs.map((leg, i) => <LegView key={i} leg={leg} api={api} wishlist={wishlist} />)}
           </div>
 
           <div className="grid-2">
@@ -181,7 +193,7 @@ export function ResultCard({ item, favorite, onToggleFavorite, compareSelected, 
         {it.booking_options.length > 0 ? (
           it.booking_options.map((b) => (
             <a key={b.url} className="btn small" href={b.url} target="_blank" rel="noopener noreferrer" title={b.label}>
-              {b.is_deep_link ? "Buchen" : "Zur Airline-Website"} ↗
+              {b.is_deep_link ? "Buchen" : b.kind === "meta_search" ? "Bei Aviasales prüfen" : "Zur Airline-Website"} ↗
             </a>
           ))
         ) : (

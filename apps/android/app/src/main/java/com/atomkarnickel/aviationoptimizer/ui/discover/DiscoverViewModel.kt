@@ -9,6 +9,7 @@ import com.atomkarnickel.aviationoptimizer.data.FavoritesStore
 import com.atomkarnickel.aviationoptimizer.data.SearchRepository
 import com.atomkarnickel.aviationoptimizer.data.SettingsStore
 import com.atomkarnickel.aviationoptimizer.data.buildPreferences
+import com.atomkarnickel.aviationoptimizer.data.remote.AircraftHistoryDto
 import com.atomkarnickel.aviationoptimizer.data.remote.CompareResponseDto
 import com.atomkarnickel.aviationoptimizer.data.remote.ProviderStatusDto
 import com.atomkarnickel.aviationoptimizer.data.remote.ScoredItineraryDto
@@ -43,7 +44,20 @@ sealed interface SearchState {
 
 enum class SortKey(val label: String) { SCORE("Score"), PRICE("Preis"), DURATION("Reisezeit"), STAY("Aufenthalt"), AIRCRAFT("Flugzeug") }
 
-data class ResultFilter(val nonstopOnly: Boolean = false, val wishlistOnly: Boolean = false)
+data class ResultFilter(
+    val nonstopOnly: Boolean = false,
+    val wishlistOnly: Boolean = false,
+    val departureDate: String? = null,
+    val nights: Int? = null,
+)
+
+sealed interface HistoryState {
+    data object Loading : HistoryState
+    data class Loaded(val history: AircraftHistoryDto) : HistoryState
+    data class Failed(val message: String) : HistoryState
+}
+
+fun historyKey(carrier: String, flightNumber: String, origin: String) = "$carrier-$flightNumber-$origin"
 
 data class DiscoverUiState(
     val form: SearchForm = SearchForm(),
@@ -58,12 +72,15 @@ data class DiscoverUiState(
     val compareIds: List<String> = emptyList(),
     val compare: CompareResponseDto? = null,
     val message: String? = null,
+    val history: Map<String, HistoryState> = emptyMap(),
 )
 
 fun visibleResults(results: List<ScoredItineraryDto>, filter: ResultFilter, sort: SortKey): List<ScoredItineraryDto> {
     val aircraftScore = { s: ScoredItineraryDto -> s.components.firstOrNull { it.key == "aircraft" }?.score ?: 0.0 }
     val filtered = results.filter {
-        (!filter.nonstopOnly || it.itinerary.stops == 0) && (!filter.wishlistOnly || it.wishlistHits.isNotEmpty())
+        (!filter.nonstopOnly || it.itinerary.stops == 0) && (!filter.wishlistOnly || it.wishlistHits.isNotEmpty()) &&
+            (filter.departureDate == null || it.itinerary.outboundDate == filter.departureDate) &&
+            (filter.nights == null || it.itinerary.nights == filter.nights)
     }
     val comparator: Comparator<ScoredItineraryDto> = when (sort) {
         SortKey.SCORE -> compareBy { it.rank }
@@ -207,5 +224,19 @@ class DiscoverViewModel @Inject constructor(
     }
 
     fun closeCompare() = _state.update { it.copy(compare = null) }
+
+    /** Lädt auf Wunsch die beobachteten Flugzeugtypen einer Flugnummer (OpenSky, kostenlos). */
+    fun loadHistory(carrier: String, flightNumber: String, origin: String) {
+        val key = historyKey(carrier, flightNumber, origin)
+        if (_state.value.history[key] is HistoryState.Loading || _state.value.history[key] is HistoryState.Loaded) return
+        _state.update { it.copy(history = it.history + (key to HistoryState.Loading)) }
+        viewModelScope.launch {
+            val next = when (val r = repository.aircraftHistory(carrier, flightNumber, origin)) {
+                is ApiResult.Success -> HistoryState.Loaded(r.value)
+                is ApiResult.Failure -> HistoryState.Failed(r.error.message)
+            }
+            _state.update { it.copy(history = it.history + (key to next)) }
+        }
+    }
     fun dismissMessage() = _state.update { it.copy(message = null) }
 }

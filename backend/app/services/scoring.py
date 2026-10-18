@@ -119,6 +119,9 @@ def comfort_score(itin: Itinerary) -> tuple[float, list[str]]:
             if c.airport_change:
                 score -= 0.3
                 issues.append(f"Flughafenwechsel in {c.airport}")
+        if not leg.details_complete and leg.stops > 0:
+            score -= 0.1
+            issues.append("Umsteigedetails unbekannt")
         if leg.detour_ratio and leg.detour_ratio > 1.35:
             score -= min(0.3, (leg.detour_ratio - 1.35))
             issues.append(f"Umweg (Faktor {leg.detour_ratio:.2f})")
@@ -265,7 +268,9 @@ def _explain(scored: list[ScoredItinerary], ref: ReferenceData) -> None:
         elif it.price_source == PriceSource.test_offer:
             uncertainties.append("Testmodus des Providers – kein echtes Angebot.")
         elif it.price_source == PriceSource.estimated:
-            uncertainties.append("Geschätzter Preis – nicht buchbar.")
+            uncertainties.append("Geschätzter Preis aus zwischengespeicherten Suchen – vor Buchung prüfen.")
+        if not it.aircraft_type_ids:
+            uncertainties.append("Flugzeugtyp unbekannt – Typverlauf der Flugnummer prüfen.")
         if any(seg.aircraft_status != AircraftAssignmentStatus.confirmed
                for leg in it.legs for seg in leg.segments if seg.aircraft_type_id):
             uncertainties.append("Flugzeugtypen sind geplant, nicht garantiert – Gerätewechsel möglich.")

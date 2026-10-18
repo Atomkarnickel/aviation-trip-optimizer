@@ -10,16 +10,21 @@ flowchart LR
     API[REST /api/v1] --> S[SearchService]
     S --> D[Datumsplanung]
     S --> P[Provider-Registry]
-    P --> DU[DuffelProvider]
+    P --> TP[TravelpayoutsProvider<br/>kostenlos, geschätzt]
+    P --> DU[DuffelProvider<br/>optional]
     P --> DE[DemoProvider<br/>nur DEMO_MODE]
     S --> B[Itinerary-Builder<br/>Zeitzonen · Umstiege · Umwege]
     S --> SC[Scoring + Erklärungen]
+    API --> H[AircraftHistoryService]
+    H --> OS[OpenSky Network]
+    H --> HX[hexdb.io]
     API --> R[ReleaseService]
     S --> DB[(PostgreSQL/SQLite<br/>Alembic)]
   end
   A -- HTTPS --> API
   W -- HTTPS --> API
   DU -- HTTPS --> DUF[Duffel API]
+  TP -- HTTPS --> TPA[Travelpayouts API]
   R --> GH[GitHub Releases API]
   A -. Versionsprüfung .-> GH
   W -. Versionsprüfung .-> GH
@@ -43,11 +48,12 @@ flowchart LR
 1. **Validierung** (Pydantic; dieselben Regeln clientseitig in Kotlin/TS).
 2. **Routen**: Abflughäfen × Ziele; leeres Ziel = offene Suche über Drehkreuz-Kandidaten.
 3. **Flexible Daten**: alle (Abflug, Rückflug)-Paare mit min ≤ Nächte ≤ max im Fenster; Auswahl gleichmäßig verteilt, die längstmögliche Reise ist immer dabei. Budget: `MAX_PROVIDER_CALLS_PER_SEARCH`.
-4. **Provider-Abfragen** parallel (Semaphore), Timeouts, Retries mit Backoff (429/5xx/Netzwerk), Fehler je Abfrage → Status `partial`/`provider_error`.
+4. **Provider-Abfragen**: Provider mit Zeitfenster-Suche (Travelpayouts) decken das ganze Fenster mit einer Abfrage je Monatspaar ab; sonst parallel (Semaphore), Timeouts, Retries mit Backoff (429/5xx/Netzwerk), Fehler je Abfrage → Status `partial`/`provider_error`.
 5. **Itinerary-Builder**: UTC aus Ortszeit + IANA-Zeitzone (Datumsgrenze korrekt), Umstiegszeiten vs. geschätzte MCT, Flughafenwechsel, Übernachtungen, getrennte Tickets (+120 min Puffer), Umwegfaktor (Großkreis).
 6. **Harte Filter**: Budget, ausgeschlossene Airlines, Umstiege, Reisezeit, Zeitfenster, ungültige Umstiege, Umweg > 2,5, Aufenthalt.
 7. **Bewertung** (siehe unten) + **Erklärung** je Reise.
-8. **Persistenz** der Rohangebote; identische Suchen (Provider-relevante Felder) werden 15 min aus dem Cache bedient, gleichzeitige identische Suchen teilen sich eine Provider-Abfrage. Neue Gewichtungen → `/rescore` ohne neue Provider-Kosten.
+8. **Preiskalender**: günstigster erhaltener Preis je (Abflugdatum, Nächte) aus den gefilterten Angeboten.
+9. **Persistenz** der Rohangebote; identische Suchen (Provider-relevante Felder) werden 15 min aus dem Cache bedient, gleichzeitige identische Suchen teilen sich eine Provider-Abfrage. Neue Gewichtungen → `/rescore` ohne neue Provider-Kosten.
 
 ## Bewertungsfunktion
 
@@ -69,7 +75,7 @@ Erklärungen: stärkste Beiträge, Mehrpreis ggü. günstigster Option, **Wunsch
 
 ## Datenmodell
 
-Backend (SQLAlchemy/Alembic): `airports`, `airlines`, `aircraft_types`, `search_requests`, `search_results` (Itinerary inkl. Legs/Segments/Flights als JSON), `release_information`. API-Schemas (Pydantic → OpenAPI): `Airport`, `Airline`, `AircraftType`, `Segment` (Flight), `Leg`, `Connection`, `Itinerary`, `SearchRequest`, `SearchResponse`, `ScoredItinerary`, `UserPreferences`, `Weights`, `ReleaseInfo`.
+Backend (SQLAlchemy/Alembic): `airports`, `airlines` (inkl. ICAO-Codes), `aircraft_types`, `search_requests`, `search_results` (Itinerary inkl. Legs/Segments/Flights als JSON), `release_information`, `opensky_departure_days` und `aircraft_registry` (Caches für den Typverlauf). API-Schemas (Pydantic → OpenAPI): `Airport`, `Airline`, `AircraftType`, `Segment` (Flight), `Leg`, `Connection`, `Itinerary`, `SearchRequest`, `SearchResponse`, `ScoredItinerary`, `UserPreferences`, `Weights`, `ReleaseInfo`.
 
 Lokal (keine Konten nötig): Android Room `favorite_trips`, `favorite_aircraft`, `flight_log` + DataStore (Einstellungen); Web `localStorage` (`ato.settings.v1`, `ato.favorites.v1`, `ato.logbook.v1`).
 

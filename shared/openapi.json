@@ -415,6 +415,82 @@
     }
    }
   },
+  "/api/v1/aircraft-history": {
+   "get": {
+    "tags": [
+     "reference"
+    ],
+    "summary": "Aircraft History",
+    "description": "Beobachtete Flugzeugtypen einer Flugnummer der letzten Tage (OpenSky + hexdb.io, kostenlos).",
+    "operationId": "aircraft_history_api_v1_aircraft_history_get",
+    "parameters": [
+     {
+      "name": "carrier",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "pattern": "^[A-Za-z0-9]{2}$",
+       "title": "Carrier"
+      }
+     },
+     {
+      "name": "flight_number",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "pattern": "^[0-9]{1,4}[A-Za-z]?$",
+       "title": "Flight Number"
+      }
+     },
+     {
+      "name": "origin",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "pattern": "^[A-Za-z]{3}$",
+       "title": "Origin"
+      }
+     },
+     {
+      "name": "days",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "maximum": 7,
+       "minimum": 1,
+       "default": 5,
+       "title": "Days"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/AircraftHistory"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
   "/api/v1/releases": {
    "get": {
     "tags": [
@@ -525,6 +601,152 @@
      "segment"
     ],
     "title": "AircraftHighlight"
+   },
+   "AircraftHistory": {
+    "properties": {
+     "status": {
+      "type": "string",
+      "title": "Status",
+      "description": "ok | no_observations | not_supported | not_configured | unavailable"
+     },
+     "flight": {
+      "type": "string",
+      "title": "Flight"
+     },
+     "callsign": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Callsign"
+     },
+     "origin": {
+      "type": "string",
+      "title": "Origin"
+     },
+     "days_checked": {
+      "type": "integer",
+      "title": "Days Checked"
+     },
+     "observations": {
+      "items": {
+       "$ref": "#/components/schemas/AircraftObservation"
+      },
+      "type": "array",
+      "title": "Observations",
+      "default": []
+     },
+     "distribution": {
+      "items": {
+       "$ref": "#/components/schemas/AircraftTypeShare"
+      },
+      "type": "array",
+      "title": "Distribution",
+      "default": []
+     },
+     "source": {
+      "type": "string",
+      "title": "Source",
+      "default": "OpenSky Network (beobachtete Flüge) + hexdb.io (Flugzeugtyp je Transponder)"
+     },
+     "message": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Message"
+     },
+     "checked_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Checked At"
+     }
+    },
+    "type": "object",
+    "required": [
+     "status",
+     "flight",
+     "origin",
+     "days_checked",
+     "checked_at"
+    ],
+    "title": "AircraftHistory"
+   },
+   "AircraftObservation": {
+    "properties": {
+     "date": {
+      "type": "string",
+      "format": "date",
+      "title": "Date"
+     },
+     "callsign": {
+      "type": "string",
+      "title": "Callsign"
+     },
+     "icao24": {
+      "type": "string",
+      "title": "Icao24"
+     },
+     "registration": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Registration"
+     },
+     "type_code": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Type Code"
+     },
+     "aircraft_type_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Aircraft Type Id"
+     },
+     "aircraft_name": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Aircraft Name"
+     }
+    },
+    "type": "object",
+    "required": [
+     "date",
+     "callsign",
+     "icao24"
+    ],
+    "title": "AircraftObservation"
    },
    "AircraftPreference": {
     "properties": {
@@ -656,11 +878,57 @@
     ],
     "title": "AircraftType"
    },
+   "AircraftTypeShare": {
+    "properties": {
+     "aircraft_type_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Aircraft Type Id"
+     },
+     "name": {
+      "type": "string",
+      "title": "Name"
+     },
+     "count": {
+      "type": "integer",
+      "title": "Count"
+     },
+     "share": {
+      "type": "number",
+      "title": "Share"
+     }
+    },
+    "type": "object",
+    "required": [
+     "aircraft_type_id",
+     "name",
+     "count",
+     "share"
+    ],
+    "title": "AircraftTypeShare"
+   },
    "Airline": {
     "properties": {
      "iata": {
       "type": "string",
       "title": "Iata"
+     },
+     "icao": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Icao"
      },
      "name": {
       "type": "string",
@@ -706,6 +974,17 @@
      "iata": {
       "type": "string",
       "title": "Iata"
+     },
+     "icao": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Icao"
      },
      "name": {
       "type": "string",
@@ -755,7 +1034,7 @@
      "kind": {
       "type": "string",
       "title": "Kind",
-      "description": "airline_website | provider_checkout"
+      "description": "airline_website | meta_search | provider_checkout"
      },
      "label": {
       "type": "string",
@@ -788,6 +1067,46 @@
      "first"
     ],
     "title": "CabinClass"
+   },
+   "CalendarCell": {
+    "properties": {
+     "departure_date": {
+      "type": "string",
+      "format": "date",
+      "title": "Departure Date"
+     },
+     "nights": {
+      "type": "integer",
+      "title": "Nights"
+     },
+     "min_price": {
+      "type": "number",
+      "title": "Min Price"
+     },
+     "currency": {
+      "type": "string",
+      "title": "Currency"
+     },
+     "offers": {
+      "type": "integer",
+      "title": "Offers"
+     },
+     "itinerary_id": {
+      "type": "string",
+      "title": "Itinerary Id"
+     }
+    },
+    "type": "object",
+    "required": [
+     "departure_date",
+     "nights",
+     "min_price",
+     "currency",
+     "offers",
+     "itinerary_id"
+    ],
+    "title": "CalendarCell",
+    "description": "Günstigster erhaltener Preis je Abflugdatum und Aufenthaltsdauer (nur aus tatsächlich erhaltenen Angeboten)."
    },
    "CompareRequest": {
     "properties": {
@@ -1166,6 +1485,24 @@
        }
       ],
       "title": "Detour Ratio"
+     },
+     "details_complete": {
+      "type": "boolean",
+      "title": "Details Complete",
+      "description": "False: Provider liefert nur Start/Ziel/Dauer – Umsteigeflughäfen unbekannt",
+      "default": true
+     },
+     "reported_stops": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Reported Stops",
+      "description": "Umstiege laut Provider, falls Segmente fehlen"
      }
     },
     "type": "object",
@@ -1859,6 +2196,14 @@
      },
      "stats": {
       "$ref": "#/components/schemas/SearchStats"
+     },
+     "calendar": {
+      "items": {
+       "$ref": "#/components/schemas/CalendarCell"
+      },
+      "type": "array",
+      "title": "Calendar",
+      "default": []
      },
      "warnings": {
       "items": {

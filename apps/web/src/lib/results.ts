@@ -3,17 +3,21 @@ import type { ScoredItinerary } from "./types";
 export type SortKey = "score" | "price" | "duration" | "stay" | "aircraft";
 
 export interface ResultFilter {
+  departureDate: string | null;
+  nights: number | null;
   nonstopOnly: boolean;
   wishlistOnly: boolean;
   maxPrice: number | null;
   airline: string;
 }
 
-export const DEFAULT_FILTER: ResultFilter = { nonstopOnly: false, wishlistOnly: false, maxPrice: null, airline: "" };
+export const DEFAULT_FILTER: ResultFilter = { departureDate: null, nights: null, nonstopOnly: false, wishlistOnly: false, maxPrice: null, airline: "" };
 
 export function filterAndSort(items: ScoredItinerary[], filter: ResultFilter, sort: SortKey): ScoredItinerary[] {
   const filtered = items.filter((s) => {
     const it = s.itinerary;
+    if (filter.departureDate && it.outbound_date !== filter.departureDate) return false;
+    if (filter.nights !== null && it.nights !== filter.nights) return false;
     if (filter.nonstopOnly && it.stops > 0) return false;
     if (filter.wishlistOnly && s.wishlist_hits.length === 0) return false;
     if (filter.maxPrice !== null && it.price.total > filter.maxPrice) return false;

@@ -76,6 +76,7 @@ class AircraftType(BaseModel):
 
 class Airport(BaseModel):
     iata: str
+    icao: str | None = None
     name: str
     city: str
     country: str
@@ -87,6 +88,7 @@ class Airport(BaseModel):
 
 class Airline(BaseModel):
     iata: str
+    icao: str | None = None
     name: str
     country: str
     website: str | None = None
@@ -243,9 +245,14 @@ class Leg(BaseModel):
     connections: list[Connection] = []
     duration_minutes: int
     detour_ratio: float | None = None
+    details_complete: bool = Field(
+        default=True, description="False: Provider liefert nur Start/Ziel/Dauer – Umsteigeflughäfen unbekannt")
+    reported_stops: int | None = Field(default=None, description="Umstiege laut Provider, falls Segmente fehlen")
 
     @property
     def stops(self) -> int:
+        if self.reported_stops is not None:
+            return self.reported_stops
         return max(0, len(self.segments) - 1)
 
 
@@ -260,7 +267,7 @@ class PriceBreakdown(BaseModel):
 
 
 class BookingOption(BaseModel):
-    kind: str = Field(description="airline_website | provider_checkout")
+    kind: str = Field(description="airline_website | meta_search | provider_checkout")
     label: str
     url: str
     is_deep_link: bool = False
@@ -345,6 +352,17 @@ class SearchStats(BaseModel):
     filtered_out: dict[str, int]
 
 
+class CalendarCell(BaseModel):
+    """Günstigster erhaltener Preis je Abflugdatum und Aufenthaltsdauer (nur aus tatsächlich erhaltenen Angeboten)."""
+
+    departure_date: date
+    nights: int
+    min_price: float
+    currency: str
+    offers: int
+    itinerary_id: str
+
+
 class SearchResponse(BaseModel):
     search_id: str
     status: str = Field(description="ok | no_results | provider_not_configured | provider_error | partial")
@@ -357,6 +375,7 @@ class SearchResponse(BaseModel):
     results: list[ScoredItinerary]
     cheapest_total: float | None = None
     stats: SearchStats
+    calendar: list[CalendarCell] = []
     warnings: list[str] = []
 
 
@@ -378,6 +397,39 @@ class CompareResponse(BaseModel):
     search_id: str
     itinerary_ids: list[str]
     rows: list[CompareRow]
+
+
+# --------------------------------------------------------------------------- Flugzeugtyp-Verlauf
+
+
+class AircraftObservation(BaseModel):
+    date: date
+    callsign: str
+    icao24: str
+    registration: str | None = None
+    type_code: str | None = None
+    aircraft_type_id: str | None = None
+    aircraft_name: str | None = None
+
+
+class AircraftTypeShare(BaseModel):
+    aircraft_type_id: str | None
+    name: str
+    count: int
+    share: float
+
+
+class AircraftHistory(BaseModel):
+    status: str = Field(description="ok | no_observations | not_supported | not_configured | unavailable")
+    flight: str
+    callsign: str | None = None
+    origin: str
+    days_checked: int
+    observations: list[AircraftObservation] = []
+    distribution: list[AircraftTypeShare] = []
+    source: str = "OpenSky Network (beobachtete Flüge) + hexdb.io (Flugzeugtyp je Transponder)"
+    message: str | None = None
+    checked_at: datetime
 
 
 # --------------------------------------------------------------------------- Releases

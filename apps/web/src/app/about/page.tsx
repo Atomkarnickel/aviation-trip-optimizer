@@ -100,7 +100,7 @@ export default function AboutPage() {
         <dl className="kv">
           <dt>Quellcode</dt><dd>{REPOSITORY_URL ? <a href={REPOSITORY_URL} target="_blank" rel="noopener noreferrer">{REPOSITORY_URL}</a> : "–"}</dd>
           <dt>Lizenz</dt><dd>MIT (siehe LICENSE im Repository)</dd>
-          <dt>Flugdaten</dt><dd>Live-Angebote über den im Backend konfigurierten Provider (derzeit vorgesehen: Duffel). Ohne Provider werden keine Ergebnisse angezeigt.</dd>
+          <dt>Flugdaten</dt><dd>Kostenlose, zwischengespeicherte Preise von Travelpayouts/Aviasales (als geschätzt gekennzeichnet); Typverlauf aus OpenSky Network und hexdb.io. Ohne Provider werden keine Ergebnisse angezeigt.</dd>
           <dt>Flugzeugkatalog</dt><dd>{AIRCRAFT_SOURCE.source} Stand {AIRCRAFT_SOURCE.updated}.</dd>
           <dt>Flugzeugtypen</dt><dd>Typen sind laut Flugplan geplant und nicht garantiert. Airlines können kurzfristig Geräte tauschen.</dd>
           <dt>Datenschutz</dt><dd>Kein Konto, kein Tracking. Einstellungen, Favoriten und Logbuch liegen nur lokal im Browser. Die Versionsprüfung ruft die öffentliche GitHub-API auf.</dd>

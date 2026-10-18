@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ComparePanel } from "@/components/ComparePanel";
+import { PriceCalendar } from "@/components/PriceCalendar";
 import { ProviderBanner } from "@/components/ProviderBanner";
 import { ResultCard } from "@/components/ResultCard";
 import { SearchForm, defaultFormValues } from "@/components/SearchForm";
@@ -46,6 +47,7 @@ export default function DiscoverPage() {
   const [compareIds, setCompareIds] = useState<string[]>([]);
   const [compare, setCompare] = useState<CompareResponse | null>(null);
   const inFlight = useRef(false);
+  const [waking, setWaking] = useState(false);
 
   useEffect(() => {
     if (!loaded) return;
@@ -54,7 +56,17 @@ export default function DiscoverPage() {
       return;
     }
     setBackendError(null);
-    api.meta().then((m) => setProvider(m.provider)).catch((e: ApiError) => setBackendError(e.message));
+    // Kostenloses Hosting schläft bei Inaktivität – nach 4 s Hinweis zeigen statt Fehler.
+    const timer = setTimeout(() => setWaking(true), 4000);
+    api
+      .meta()
+      .then((m) => setProvider(m.provider))
+      .catch((e: ApiError) => setBackendError(e.message))
+      .finally(() => {
+        clearTimeout(timer);
+        setWaking(false);
+      });
+    return () => clearTimeout(timer);
   }, [api, loaded]);
 
   const preferences = toPreferences(settings);
@@ -137,6 +149,14 @@ export default function DiscoverPage() {
       </div>
       {settings.customWeights && <p className="small muted">Eigene Gewichtung aktiv (Profil). Ein Klick auf einen Modus setzt sie zurück.</p>}
 
+      {waking && !provider && !backendError && (
+        <div className="banner info" role="status">
+          <div>
+            <strong>Backend wird gestartet …</strong>
+            Das kostenlose Hosting schläft bei Inaktivität und braucht beim ersten Aufruf bis zu einer Minute.
+          </div>
+        </div>
+      )}
       <ProviderBanner provider={provider} backendError={backendError} />
 
       {loaded && (
@@ -225,6 +245,12 @@ export default function DiscoverPage() {
             </details>
           )}
 
+          <PriceCalendar
+            cells={response.calendar ?? []}
+            selected={{ date: filter.departureDate, nights: filter.nights }}
+            onSelect={(date, nights) => setFilter({ ...filter, departureDate: date, nights })}
+          />
+
           {compare && <ComparePanel data={compare} items={response.results} onClose={() => setCompare(null)} />}
 
           {items.length === 0 && response.results.length > 0 && <p className="muted">Keine Ergebnisse für die gewählten Filter.</p>}
@@ -240,6 +266,8 @@ export default function DiscoverPage() {
                 setCompareIds((ids) => (ids.includes(item.itinerary.id) ? ids.filter((x) => x !== item.itinerary.id) : [...ids, item.itinerary.id]))
               }
               betterAlternativeRank={item.explanation.better_value_alternative_id ? rankById.get(item.explanation.better_value_alternative_id) : undefined}
+              api={api}
+              wishlist={wishlist}
             />
           ))}
         </section>

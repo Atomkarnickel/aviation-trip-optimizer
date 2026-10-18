@@ -230,3 +230,13 @@ td.best { color: var(--success); font-weight: 700; }
   .kv { grid-template-columns: 1fr; }
   .kv dt { margin-top: 6px; }
 }
+
+/* Preiskalender */
+table.heatmap { width: auto; border-collapse: separate; border-spacing: 0; }
+table.heatmap th, table.heatmap td { border: 0; padding: 2px 4px; text-align: center; }
+.heat-cell {
+  font: inherit; font-size: 0.78rem; min-width: 46px; min-height: 32px; border: 1px solid var(--border);
+  border-radius: 6px; color: var(--text); cursor: pointer;
+}
+.heat-cell[aria-pressed="true"] { outline: 3px solid var(--accent); outline-offset: 1px; font-weight: 700; }
+.history { margin-top: 4px; }

@@ -12,6 +12,8 @@ import com.atomkarnickel.aviationoptimizer.ui.about.AboutViewModel
 import com.atomkarnickel.aviationoptimizer.ui.about.AppInfo
 import com.atomkarnickel.aviationoptimizer.ui.discover.BackendState
 import com.atomkarnickel.aviationoptimizer.ui.discover.DiscoverViewModel
+import com.atomkarnickel.aviationoptimizer.ui.discover.HistoryState
+import com.atomkarnickel.aviationoptimizer.ui.discover.historyKey
 import com.atomkarnickel.aviationoptimizer.ui.discover.ResultFilter
 import com.atomkarnickel.aviationoptimizer.ui.discover.SearchState
 import com.atomkarnickel.aviationoptimizer.ui.discover.SortKey
@@ -145,6 +147,39 @@ class DiscoverViewModelTest {
         assertTrue(item.itinerary.id in vm.state.value.favoriteIds)
         listOf("a", "b", "c", "d", "e").forEach(vm::toggleCompare)
         assertEquals(4, vm.state.value.compareIds.size)
+    }
+
+    @Test
+    fun aircraftHistoryLoadsOnceAndIsCached() = runTest {
+        val vm = vm()
+        advanceUntilIdle()
+        vm.loadHistory("LX", "38", "ZRH")
+        vm.loadHistory("LX", "38", "ZRH")
+        advanceUntilIdle()
+        val h = vm.state.value.history[historyKey("LX", "38", "ZRH")]
+        assertTrue(h is HistoryState.Loaded)
+        assertEquals("A343", (h as HistoryState.Loaded).history.distribution.first().aircraftTypeId)
+        vm.loadHistory("LX", "38", "ZRH")
+        advanceUntilIdle()
+        assertEquals(1, repo.historyCalls)
+    }
+
+    @Test
+    fun aircraftHistoryFailureIsShown() = runTest {
+        repo.historyResult = ApiResult.Failure(AppError(AppError.Kind.RATE_LIMITED, "Zu viele Abfragen"))
+        val vm = vm()
+        advanceUntilIdle()
+        vm.loadHistory("LX", "38", "ZRH")
+        advanceUntilIdle()
+        assertEquals(HistoryState.Failed("Zu viele Abfragen"), vm.state.value.history[historyKey("LX", "38", "ZRH")])
+    }
+
+    @Test
+    fun calendarSelectionFiltersResults() {
+        val results = sampleResponse().results
+        assertEquals(3, visibleResults(results, ResultFilter(departureDate = "2026-12-18", nights = 14), SortKey.SCORE).size)
+        assertTrue(visibleResults(results, ResultFilter(departureDate = "2026-12-19"), SortKey.SCORE).isEmpty())
+        assertTrue(visibleResults(results, ResultFilter(nights = 3), SortKey.SCORE).isEmpty())
     }
 
     @Test

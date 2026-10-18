@@ -12,6 +12,7 @@ import com.atomkarnickel.aviationoptimizer.data.local.FavoriteTripEntity
 import com.atomkarnickel.aviationoptimizer.data.local.FlightLogDao
 import com.atomkarnickel.aviationoptimizer.data.local.FlightLogEntryEntity
 import com.atomkarnickel.aviationoptimizer.data.remote.AircraftCatalogDto
+import com.atomkarnickel.aviationoptimizer.data.remote.AircraftHistoryDto
 import com.atomkarnickel.aviationoptimizer.data.remote.AircraftPreferenceDto
 import com.atomkarnickel.aviationoptimizer.data.remote.AircraftTypeDto
 import com.atomkarnickel.aviationoptimizer.data.remote.BackendApi
@@ -102,6 +103,7 @@ interface SearchRepository {
     suspend fun search(request: SearchRequestDto): ApiResult<SearchResponseDto>
     suspend fun rescore(searchId: String, preferences: UserPreferencesDto): ApiResult<SearchResponseDto>
     suspend fun compare(searchId: String, ids: List<String>): ApiResult<CompareResponseDto>
+    suspend fun aircraftHistory(carrier: String, flightNumber: String, origin: String): ApiResult<AircraftHistoryDto>
 }
 
 class BackendSearchRepository(
@@ -148,6 +150,9 @@ class BackendSearchRepository(
         call { it.rescore(searchId, RescoreRequestDto(preferences)) }
 
     override suspend fun compare(searchId: String, ids: List<String>) = call { it.compare(searchId, CompareRequestDto(ids)) }
+
+    override suspend fun aircraftHistory(carrier: String, flightNumber: String, origin: String) =
+        call { it.aircraftHistory(carrier, flightNumber, origin) }
 
     companion object {
         fun mapHttp(e: HttpException, json: Json): AppError {

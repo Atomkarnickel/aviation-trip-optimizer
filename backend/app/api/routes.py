@@ -4,6 +4,7 @@ from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.concurrency import run_in_threadpool
 
 from app.models.schemas import (
+    AircraftHistory,
     AircraftType,
     Airline,
     Airport,
@@ -101,6 +102,24 @@ async def compare(search_id: str, body: CompareRequest, request: Request) -> Com
         return await run_in_threadpool(_state(request).search_service.compare, search_id, body.itinerary_ids)
     except SearchNotFound as exc:
         raise HTTPException(404, str(exc)) from exc
+
+
+@router.get("/aircraft-history", response_model=AircraftHistory, tags=["reference"])
+async def aircraft_history(
+    request: Request,
+    carrier: str = Query(..., pattern=r"^[A-Za-z0-9]{2}$"),
+    flight_number: str = Query(..., pattern=r"^[0-9]{1,4}[A-Za-z]?$"),
+    origin: str = Query(..., pattern=r"^[A-Za-z]{3}$"),
+    days: int = Query(5, ge=1, le=7),
+) -> AircraftHistory:
+    """Beobachtete Flugzeugtypen einer Flugnummer der letzten Tage (OpenSky + hexdb.io, kostenlos)."""
+    st = _state(request)
+    client = request.client.host if request.client else "unknown"
+    allowed, retry = st.history_limiter.allow(client)
+    if not allowed:
+        raise HTTPException(429, "Zu viele Abfragen des Typverlaufs. Bitte kurz warten.",
+                            headers={"Retry-After": str(retry)})
+    return await st.history_service.history(carrier, flight_number, origin, days)
 
 
 @router.get("/releases", response_model=ReleaseStatus, tags=["releases"])

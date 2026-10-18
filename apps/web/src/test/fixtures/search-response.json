@@ -1,5 +1,5 @@
 {
- "search_id": "cea8070b0a5543fdabf25297536019b6",
+ "search_id": "bf520ee2269649878a4e96631c31900b",
  "status": "ok",
  "provider": {
   "name": "demo",
@@ -8,7 +8,7 @@
   "message": "DEMO-MODUS: synthetische Beispieldaten. Keine echten Flüge, Preise oder Buchungsmöglichkeiten."
  },
  "is_demo": true,
- "generated_at": "2026-10-18T16:41:03.576482",
+ "generated_at": "2026-10-18T19:12:07.302968",
  "cached": false,
  "mode": "best_value",
  "weights": {
@@ -57,7 +57,9 @@
       ],
       "connections": [],
       "duration_minutes": 783,
-      "detour_ratio": 1.0
+      "detour_ratio": 1.0,
+      "details_complete": true,
+      "reported_stops": null
      },
      {
       "direction": "inbound",
@@ -84,7 +86,9 @@
       ],
       "connections": [],
       "duration_minutes": 783,
-      "detour_ratio": 1.0
+      "detour_ratio": 1.0,
+      "details_complete": true,
+      "reported_stops": null
      }
     ],
     "price": {
@@ -111,7 +115,7 @@
      "A359",
      "A35K"
     ],
-    "fetched_at": "2026-10-18T16:41:03.575482Z",
+    "fetched_at": "2026-10-18T19:12:07.301967Z",
     "offer_expires_at": null,
     "data_notes": [
      "DEMO-DATEN: fiktive Airline, Flugnummer und Preis – nicht buchbar."
@@ -280,7 +284,9 @@
        }
       ],
       "duration_minutes": 915,
-      "detour_ratio": 1.03
+      "detour_ratio": 1.03,
+      "details_complete": true,
+      "reported_stops": null
      },
      {
       "direction": "inbound",
@@ -307,7 +313,9 @@
       ],
       "connections": [],
       "duration_minutes": 783,
-      "detour_ratio": 1.0
+      "detour_ratio": 1.0,
+      "details_complete": true,
+      "reported_stops": null
      }
     ],
     "price": {
@@ -334,7 +342,7 @@
      "A346",
      "A35K"
     ],
-    "fetched_at": "2026-10-18T16:41:03.575482Z",
+    "fetched_at": "2026-10-18T19:12:07.301967Z",
     "offer_expires_at": null,
     "data_notes": [
      "DEMO-DATEN: fiktive Airline, Flugnummer und Preis – nicht buchbar."
@@ -480,7 +488,9 @@
       ],
       "connections": [],
       "duration_minutes": 783,
-      "detour_ratio": 1.0
+      "detour_ratio": 1.0,
+      "details_complete": true,
+      "reported_stops": null
      },
      {
       "direction": "inbound",
@@ -537,7 +547,9 @@
        }
       ],
       "duration_minutes": 972,
-      "detour_ratio": 1.01
+      "detour_ratio": 1.01,
+      "details_complete": true,
+      "reported_stops": null
      }
     ],
     "price": {
@@ -565,7 +577,7 @@
      "B789",
      "B38M"
     ],
-    "fetched_at": "2026-10-18T16:41:03.575482Z",
+    "fetched_at": "2026-10-18T19:12:07.301967Z",
     "offer_expires_at": null,
     "data_notes": [
      "DEMO-DATEN: fiktive Airline, Flugnummer und Preis – nicht buchbar."
@@ -704,7 +716,9 @@
       ],
       "connections": [],
       "duration_minutes": 783,
-      "detour_ratio": 1.0
+      "detour_ratio": 1.0,
+      "details_complete": true,
+      "reported_stops": null
      },
      {
       "direction": "inbound",
@@ -731,7 +745,9 @@
       ],
       "connections": [],
       "duration_minutes": 783,
-      "detour_ratio": 1.0
+      "detour_ratio": 1.0,
+      "details_complete": true,
+      "reported_stops": null
      }
     ],
     "price": {
@@ -756,7 +772,7 @@
     "aircraft_type_ids": [
      "A380"
     ],
-    "fetched_at": "2026-10-18T16:41:03.570981Z",
+    "fetched_at": "2026-10-18T19:12:07.296965Z",
     "offer_expires_at": null,
     "data_notes": [
      "DEMO-DATEN: fiktive Airline, Flugnummer und Preis – nicht buchbar."
@@ -874,6 +890,24 @@
   "offers_received": 16,
   "filtered_out": {}
  },
+ "calendar": [
+  {
+   "departure_date": "2026-12-18",
+   "nights": 6,
+   "min_price": 986.0,
+   "currency": "EUR",
+   "offers": 8,
+   "itinerary_id": "388e9dd5a2ab4cb0"
+  },
+  {
+   "departure_date": "2026-12-18",
+   "nights": 15,
+   "min_price": 991.0,
+   "currency": "EUR",
+   "offers": 8,
+   "itinerary_id": "75329f00f7f07e2d"
+  }
+ ],
  "warnings": [
   "Flexible Daten: 2 von 85 möglichen Datumskombinationen je Route geprüft (gleichmäßig verteilt)."
  ]

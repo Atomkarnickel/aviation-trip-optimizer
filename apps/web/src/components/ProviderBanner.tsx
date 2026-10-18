@@ -22,6 +22,16 @@ export function ProviderBanner({ provider, backendError }: { provider: ProviderS
       </div>
     );
   }
+  if (provider.mode === "estimated") {
+    return (
+      <div className="banner info" role="status">
+        <div>
+          <strong>Kostenlose Preisdaten (geschätzt)</strong>
+          {provider.message}
+        </div>
+      </div>
+    );
+  }
   if (provider.mode === "demo" || provider.mode === "test") {
     return (
       <div className="banner demo" role="status">

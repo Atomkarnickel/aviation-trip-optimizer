@@ -15,6 +15,7 @@ class Base(DeclarativeBase):
 class AirportRow(Base):
     __tablename__ = "airports"
     iata: Mapped[str] = mapped_column(String(3), primary_key=True)
+    icao: Mapped[str | None] = mapped_column(String(4), nullable=True)
     name: Mapped[str] = mapped_column(String(120))
     city: Mapped[str] = mapped_column(String(120))
     country: Mapped[str] = mapped_column(String(2))
@@ -27,6 +28,7 @@ class AirportRow(Base):
 class AirlineRow(Base):
     __tablename__ = "airlines"
     iata: Mapped[str] = mapped_column(String(2), primary_key=True)
+    icao: Mapped[str | None] = mapped_column(String(3), nullable=True)
     name: Mapped[str] = mapped_column(String(120))
     country: Mapped[str] = mapped_column(String(2))
     website: Mapped[str | None] = mapped_column(String(255), nullable=True)
@@ -79,4 +81,25 @@ class ReleaseInformationRow(Base):
     prerelease: Mapped[int] = mapped_column(Integer, default=0)
     apk_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     sha256: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class OpenSkyDepartureDayRow(Base):
+    """Cache: alle von OpenSky beobachteten Abflüge eines Flughafens an einem UTC-Tag ({callsign: [icao24]})."""
+
+    __tablename__ = "opensky_departure_days"
+    airport_icao: Mapped[str] = mapped_column(String(4), primary_key=True)
+    day: Mapped[str] = mapped_column(String(10), primary_key=True)
+    callsigns: Mapped[dict] = mapped_column(JSON)
+    fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class AircraftRegistryRow(Base):
+    """Cache: Flugzeugtyp je Transponder-Adresse (hexdb.io). type_code NULL = unbekannt."""
+
+    __tablename__ = "aircraft_registry"
+    icao24: Mapped[str] = mapped_column(String(6), primary_key=True)
+    type_code: Mapped[str | None] = mapped_column(String(8), nullable=True)
+    registration: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    description: Mapped[str | None] = mapped_column(String(120), nullable=True)
     fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))

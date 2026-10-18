@@ -13,6 +13,7 @@ from app.core.config import Settings, get_settings
 from app.core.ratelimit import SlidingWindowLimiter
 from app.db.session import make_engine, make_session_factory, run_migrations, seed_reference
 from app.providers.registry import create_provider
+from app.services.aircraft_history import AircraftHistoryService
 from app.services.reference import get_reference
 from app.services.releases import ReleaseService
 from app.services.search import SearchService
@@ -21,7 +22,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name
 log = logging.getLogger("app")
 
 
-def create_app(settings: Settings | None = None, provider=None) -> FastAPI:
+def create_app(settings: Settings | None = None, provider=None, history_transport=None) -> FastAPI:
     settings = settings or get_settings()
     ref = get_reference()
 
@@ -40,6 +41,8 @@ def create_app(settings: Settings | None = None, provider=None) -> FastAPI:
         app.state.release_service = ReleaseService(settings.github_repository, settings.github_token,
                                                    settings.release_cache_seconds)
         app.state.limiter = SlidingWindowLimiter(settings.search_rate_limit_per_minute)
+        app.state.history_limiter = SlidingWindowLimiter(settings.aircraft_history_rate_limit_per_minute)
+        app.state.history_service = AircraftHistoryService(settings, ref, session_factory, history_transport)
         status = active_provider.status()
         log.info("Backend %s gestartet – Provider %s (%s)", settings.app_version, status.name, status.mode)
         yield

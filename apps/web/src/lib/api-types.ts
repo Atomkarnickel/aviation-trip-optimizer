@@ -197,6 +197,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/aircraft-history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Aircraft History
+         * @description Beobachtete Flugzeugtypen einer Flugnummer der letzten Tage (OpenSky + hexdb.io, kostenlos).
+         */
+        get: operations["aircraft_history_api_v1_aircraft_history_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/releases": {
         parameters: {
             query?: never;
@@ -251,6 +271,64 @@ export interface components {
             wishlist: boolean;
             /** Segment */
             segment: string;
+        };
+        /** AircraftHistory */
+        AircraftHistory: {
+            /**
+             * Status
+             * @description ok | no_observations | not_supported | not_configured | unavailable
+             */
+            status: string;
+            /** Flight */
+            flight: string;
+            /** Callsign */
+            callsign?: string | null;
+            /** Origin */
+            origin: string;
+            /** Days Checked */
+            days_checked: number;
+            /**
+             * Observations
+             * @default []
+             */
+            observations: components["schemas"]["AircraftObservation"][];
+            /**
+             * Distribution
+             * @default []
+             */
+            distribution: components["schemas"]["AircraftTypeShare"][];
+            /**
+             * Source
+             * @default OpenSky Network (beobachtete Flüge) + hexdb.io (Flugzeugtyp je Transponder)
+             */
+            source: string;
+            /** Message */
+            message?: string | null;
+            /**
+             * Checked At
+             * Format: date-time
+             */
+            checked_at: string;
+        };
+        /** AircraftObservation */
+        AircraftObservation: {
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Callsign */
+            callsign: string;
+            /** Icao24 */
+            icao24: string;
+            /** Registration */
+            registration?: string | null;
+            /** Type Code */
+            type_code?: string | null;
+            /** Aircraft Type Id */
+            aircraft_type_id?: string | null;
+            /** Aircraft Name */
+            aircraft_name?: string | null;
         };
         /** AircraftPreference */
         AircraftPreference: {
@@ -310,10 +388,23 @@ export interface components {
              */
             bookable: boolean;
         };
+        /** AircraftTypeShare */
+        AircraftTypeShare: {
+            /** Aircraft Type Id */
+            aircraft_type_id: string | null;
+            /** Name */
+            name: string;
+            /** Count */
+            count: number;
+            /** Share */
+            share: number;
+        };
         /** Airline */
         Airline: {
             /** Iata */
             iata: string;
+            /** Icao */
+            icao?: string | null;
             /** Name */
             name: string;
             /** Country */
@@ -327,6 +418,8 @@ export interface components {
         Airport: {
             /** Iata */
             iata: string;
+            /** Icao */
+            icao?: string | null;
             /** Name */
             name: string;
             /** City */
@@ -349,7 +442,7 @@ export interface components {
         BookingOption: {
             /**
              * Kind
-             * @description airline_website | provider_checkout
+             * @description airline_website | meta_search | provider_checkout
              */
             kind: string;
             /** Label */
@@ -367,6 +460,27 @@ export interface components {
          * @enum {string}
          */
         CabinClass: "economy" | "premium_economy" | "business" | "first";
+        /**
+         * CalendarCell
+         * @description Günstigster erhaltener Preis je Abflugdatum und Aufenthaltsdauer (nur aus tatsächlich erhaltenen Angeboten).
+         */
+        CalendarCell: {
+            /**
+             * Departure Date
+             * Format: date
+             */
+            departure_date: string;
+            /** Nights */
+            nights: number;
+            /** Min Price */
+            min_price: number;
+            /** Currency */
+            currency: string;
+            /** Offers */
+            offers: number;
+            /** Itinerary Id */
+            itinerary_id: string;
+        };
         /** CompareRequest */
         CompareRequest: {
             /** Itinerary Ids */
@@ -517,6 +631,17 @@ export interface components {
             duration_minutes: number;
             /** Detour Ratio */
             detour_ratio?: number | null;
+            /**
+             * Details Complete
+             * @description False: Provider liefert nur Start/Ziel/Dauer – Umsteigeflughäfen unbekannt
+             * @default true
+             */
+            details_complete: boolean;
+            /**
+             * Reported Stops
+             * @description Umstiege laut Provider, falls Segmente fehlen
+             */
+            reported_stops?: number | null;
         };
         /** MetaResponse */
         MetaResponse: {
@@ -795,6 +920,11 @@ export interface components {
             /** Cheapest Total */
             cheapest_total?: number | null;
             stats: components["schemas"]["SearchStats"];
+            /**
+             * Calendar
+             * @default []
+             */
+            calendar: components["schemas"]["CalendarCell"][];
             /**
              * Warnings
              * @default []
@@ -1238,6 +1368,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CompareResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    aircraft_history_api_v1_aircraft_history_get: {
+        parameters: {
+            query: {
+                carrier: string;
+                flight_number: string;
+                origin: string;
+                days?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AircraftHistory"];
                 };
             };
             /** @description Validation Error */

@@ -19,3 +19,5 @@ export type MetaResponse = S["MetaResponse"];
 export type ProviderStatus = S["ProviderStatus"];
 export type OptimizationMode = S["OptimizationMode"];
 export type AircraftPreferenceStatus = S["AircraftPreferenceStatus"];
+export type CalendarCell = S["CalendarCell"];
+export type AircraftHistory = S["AircraftHistory"];

@@ -109,11 +109,20 @@ fun DiscoverScreen(vm: DiscoverViewModel = hiltViewModel()) {
             if (response.warnings.isNotEmpty()) {
                 item { Banner("Hinweise zur Suche", response.warnings.joinToString("\n• ", prefix = "• "), BannerKind.INFO) }
             }
+            if (response.calendar.isNotEmpty()) {
+                item {
+                    PriceCalendar(response.calendar, state.filter.departureDate, state.filter.nights) { d, n ->
+                        vm.setFilter(state.filter.copy(departureDate = d, nights = n))
+                    }
+                }
+            }
             item { SortAndFilter(state, vm) }
             state.compare?.let { cmp -> item { CompareCard(cmp, response.results, vm::closeCompare) } }
             items(visibleResults(response.results, state.filter, state.sort), key = { it.itinerary.id }) { item ->
                 ResultCard(
                     item = item, catalog = vm.catalog,
+                    history = state.history,
+                    onLoadHistory = vm::loadHistory,
                     favorite = item.itinerary.id in state.favoriteIds,
                     inCompare = item.itinerary.id in state.compareIds,
                     onFavorite = { vm.toggleFavorite(item) },
@@ -150,7 +159,7 @@ private fun BackendBanner(state: BackendState, onRetry: () -> Unit) {
         BackendState.Checking -> Row(verticalAlignment = Alignment.CenterVertically) {
             CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
             Spacer(Modifier.width(8.dp))
-            Text("Verbindung zum Backend wird geprüft …")
+            Text("Verbindung zum Backend wird geprüft … Das kostenlose Hosting kann beim ersten Aufruf bis zu einer Minute zum Aufwachen brauchen.")
         }
         is BackendState.Unavailable -> Column {
             Banner("Backend nicht verbunden", state.message + " Ohne Backend ist keine Flugsuche möglich.", BannerKind.ERROR)
@@ -160,6 +169,7 @@ private fun BackendBanner(state: BackendState, onRetry: () -> Unit) {
             val p = state.provider
             when {
                 !p.configured -> Banner("Keine Live-Flugdaten konfiguriert", p.message, BannerKind.WARN)
+                p.mode == "estimated" -> Banner("Kostenlose Preisdaten (geschätzt)", p.message, BannerKind.INFO)
                 p.mode == "demo" -> Banner("DEMO-MODUS", p.message, BannerKind.DEMO)
                 p.mode == "test" -> Banner("TESTMODUS", p.message, BannerKind.DEMO)
                 else -> Banner("Live-Daten aktiv (${p.name})", p.message, BannerKind.OK)
@@ -322,6 +332,8 @@ fun ResultCard(
     inCompare: Boolean,
     onFavorite: () -> Unit,
     onCompare: () -> Unit,
+    history: Map<String, HistoryState> = emptyMap(),
+    onLoadHistory: (String, String, String) -> Unit = { _, _, _ -> },
 ) {
     val it = item.itinerary
     var open by remember { mutableStateOf(item.rank == 1) }
@@ -361,7 +373,7 @@ fun ResultCard(
                         Text(" +${"%.1f".format(c.contribution)}", style = MaterialTheme.typography.labelSmall)
                     }
                 }
-                it.legs.forEach { leg -> LegView(leg, catalog) }
+                it.legs.forEach { leg -> LegView(leg, catalog, history, onLoadHistory) }
                 Text("Preis", style = MaterialTheme.typography.titleMedium)
                 KeyValue("Gesamt", "${Format.money(it.price.total, it.price.currency)} für ${it.price.travelers} Reisende(n)")
                 it.price.base?.let { b -> KeyValue("Grundpreis", Format.money(b, it.price.currency)) }
@@ -383,7 +395,7 @@ fun ResultCard(
                     AssistChip(onClick = {}, enabled = false, label = { Text(if (it.isDemo) "Demo – nicht buchbar" else "Kein verifizierter Buchungslink") })
                 } else it.bookingOptions.forEach { b ->
                     Button(onClick = { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(b.url))) }) {
-                        Text(if (b.isDeepLink) "Buchen ↗" else "Airline-Website ↗")
+                        Text(if (b.isDeepLink) "Buchen ↗" else if (b.kind == "meta_search") "Bei Aviasales prüfen ↗" else "Airline-Website ↗")
                     }
                 }
             }
@@ -399,18 +411,25 @@ private fun Section(title: String, lines: List<String>) {
 }
 
 @Composable
-private fun LegView(leg: LegDto, catalog: AircraftCatalog) {
+private fun LegView(leg: LegDto, catalog: AircraftCatalog, history: Map<String, HistoryState>, onLoadHistory: (String, String, String) -> Unit) {
     Text(
         (if (leg.direction == "outbound") "Hinflug" else "Rückflug") + " · " + Format.duration(leg.durationMinutes),
         style = MaterialTheme.typography.titleMedium,
     )
+    if (!leg.detailsComplete) {
+        Text(
+            "${leg.reportedStops ?: "?"} Umstieg(e) – Umsteigeflughafen und Anschlussflug vom Provider nicht übermittelt.",
+            style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error,
+        )
+    }
     leg.segments.forEachIndexed { i, s ->
         Text("${Format.date(s.departureLocal)} ${Format.time(s.departureLocal)} → ${Format.time(s.arrivalLocal)}  ${s.origin} → ${s.destination}", fontWeight = FontWeight.SemiBold)
         Text(
-            "${s.marketingCarrier} ${s.flightNumber}${s.marketingCarrierName?.let { n -> " ($n)" } ?: ""} · " +
+            "${s.marketingCarrier}${if (s.flightNumber.isNotEmpty()) " " + s.flightNumber else " (Flugnummer unbekannt)"}${s.marketingCarrierName?.let { n -> " ($n)" } ?: ""} · " +
                 "${s.aircraftTypeId?.let(catalog::name) ?: s.aircraftName ?: "Typ unbekannt"} · ${Format.AIRCRAFT_STATUS[s.aircraftStatus] ?: s.aircraftStatus}",
             color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium,
         )
+        if (s.flightNumber.isNotEmpty()) HistoryRow(s.marketingCarrier, s.flightNumber, s.origin, history, onLoadHistory)
         leg.connections.getOrNull(i)?.let { c ->
             val warn = c.risk == "tight" || c.risk == "invalid"
             Text(
@@ -418,6 +437,94 @@ private fun LegView(leg: LegDto, catalog: AircraftCatalog) {
                 style = MaterialTheme.typography.labelSmall,
                 color = if (warn) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
             )
+        }
+    }
+}
+
+@Composable
+private fun HistoryRow(carrier: String, number: String, origin: String, history: Map<String, HistoryState>, onLoad: (String, String, String) -> Unit) {
+    when (val h = history[historyKey(carrier, number, origin)]) {
+        null -> TextButton(onClick = { onLoad(carrier, number, origin) }) { Text("Typverlauf $carrier $number prüfen") }
+        HistoryState.Loading -> Text("Prüfe beobachtete Flüge …", style = MaterialTheme.typography.labelSmall)
+        is HistoryState.Failed -> Text(h.message, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
+        is HistoryState.Loaded -> {
+            val d = h.history
+            if (d.status == "ok") {
+                Text(
+                    "${d.callsign} ab ${d.origin}, letzte ${d.daysChecked} Tage: " +
+                        d.distribution.joinToString(", ") { t -> "${t.name} ${t.count}× (${(t.share * 100).toInt()} %)" },
+                    style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.secondary,
+                )
+                Text("Historisch beobachtet – keine Garantie für deinen Flugtag.", style = MaterialTheme.typography.labelSmall)
+            } else {
+                Text(d.message ?: "Keine Daten.", style = MaterialTheme.typography.labelSmall)
+            }
+        }
+    }
+}
+
+/** Heatmap: günstigster erhaltener Preis je Abflugtag (Spalten) und Aufenthaltsdauer (Zeilen). */
+@Composable
+private fun PriceCalendar(
+    cells: List<com.atomkarnickel.aviationoptimizer.data.remote.CalendarCellDto>,
+    selectedDate: String?,
+    selectedNights: Int?,
+    onSelect: (String?, Int?) -> Unit,
+) {
+    val dates = cells.map { it.departureDate }.distinct().sorted()
+    val nights = cells.map { it.nights }.distinct().sorted()
+    val byKey = cells.associateBy { it.departureDate to it.nights }
+    val min = cells.minOf { it.minPrice }
+    val max = cells.maxOf { it.minPrice }
+    val cheapest = cells.first { it.minPrice == min }
+    val accent = MaterialTheme.colorScheme.secondary
+    val surface = MaterialTheme.colorScheme.surface
+    Card(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Preiskalender", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                if (selectedDate != null || selectedNights != null) TextButton(onClick = { onSelect(null, null) }) { Text("Auswahl aufheben") }
+            }
+            Text(
+                "Günstigste Kombination: ${Format.date(cheapest.departureDate)}, ${cheapest.nights} Nächte – ${Format.money(min, cheapest.currency)}. " +
+                    "Leere Felder = keine Angebote.",
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            Row(Modifier.horizontalScroll(rememberScrollState())) {
+                Column {
+                    Row {
+                        Box(Modifier.width(44.dp).padding(2.dp)) { Text("Nächte", style = MaterialTheme.typography.labelSmall) }
+                        dates.forEach { d -> Box(Modifier.width(54.dp).padding(2.dp)) { Text(Format.date(d).take(6), style = MaterialTheme.typography.labelSmall) } }
+                    }
+                    nights.forEach { n ->
+                        Row {
+                            Box(Modifier.width(44.dp).padding(2.dp)) { Text("$n", fontWeight = FontWeight.SemiBold) }
+                            dates.forEach { d ->
+                                val c = byKey[d to n]
+                                Box(Modifier.width(54.dp).padding(2.dp)) {
+                                    if (c != null) {
+                                        val t = if (max == min) 0f else ((c.minPrice - min) / (max - min)).toFloat()
+                                        val on = selectedDate == d && selectedNights == n
+                                        androidx.compose.material3.Surface(
+                                            onClick = { if (on) onSelect(null, null) else onSelect(d, n) },
+                                            color = androidx.compose.ui.graphics.lerp(surface, accent, (1f - t) * 0.65f + 0.08f),
+                                            shape = androidx.compose.foundation.shape.RoundedCornerShape(6.dp),
+                                            border = if (on) androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null,
+                                            modifier = Modifier.fillMaxWidth().height(32.dp).semantics {
+                                                contentDescription = "Abflug ${Format.date(d)}, $n Nächte, ab ${Format.money(c.minPrice, c.currency)}"
+                                            },
+                                        ) {
+                                            Box(contentAlignment = Alignment.Center) {
+                                                Text("${c.minPrice.toInt()}", style = MaterialTheme.typography.labelSmall, fontWeight = if (on) FontWeight.Bold else FontWeight.Normal)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }

@@ -17,6 +17,14 @@ interface BackendApi {
     @POST("api/v1/search/{id}/rescore")
     suspend fun rescore(@Path("id") id: String, @Body body: RescoreRequestDto): SearchResponseDto
 
+    @GET("api/v1/aircraft-history")
+    suspend fun aircraftHistory(
+        @Query("carrier") carrier: String,
+        @Query("flight_number") flightNumber: String,
+        @Query("origin") origin: String,
+        @Query("days") days: Int = 5,
+    ): AircraftHistoryDto
+
     @POST("api/v1/search/{id}/compare")
     suspend fun compare(@Path("id") id: String, @Body body: CompareRequestDto): CompareResponseDto
 }

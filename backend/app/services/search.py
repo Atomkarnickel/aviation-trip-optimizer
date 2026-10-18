@@ -18,6 +18,7 @@ from app.db.models import SearchRequestRow, SearchResultRow
 from app.models.schemas import (
     AircraftPreference,
     AircraftPreferenceStatus,
+    CalendarCell,
     CompareResponse,
     CompareRow,
     Itinerary,
@@ -26,7 +27,7 @@ from app.models.schemas import (
     SearchStats,
     UserPreferences,
 )
-from app.providers.base import FlightProvider, ProviderError, RoundTripQuery
+from app.providers.base import FlightProvider, ProviderError, RoundTripQuery, WindowQuery
 from app.services.dates import plan_date_combinations
 from app.services.reference import OPEN_SEARCH_CANDIDATES, ReferenceData
 from app.services.scoring import effective_weights, fmt_minutes, fmt_money, score_itineraries
@@ -59,6 +60,19 @@ def merged_preferences(req: SearchRequest, prefs: UserPreferences | None = None)
         if code not in prefs.preferred_airlines:
             prefs.preferred_airlines.append(code)
     return prefs
+
+
+def build_calendar(itins: list[Itinerary]) -> list[CalendarCell]:
+    """Günstigster Preis je (Abflugdatum, Nächte) – ausschließlich aus erhaltenen Angeboten."""
+    best: dict[tuple, Itinerary] = {}
+    counts: Counter = Counter()
+    for it in itins:
+        key = (it.outbound_date, it.nights, it.price.currency)
+        counts[key] += 1
+        if key not in best or it.price.total < best[key].price.total:
+            best[key] = it
+    return [CalendarCell(departure_date=k[0], nights=k[1], min_price=v.price.total, currency=k[2], offers=counts[k],
+                         itinerary_id=v.id) for k, v in sorted(best.items(), key=lambda kv: (kv[0][0], kv[0][1]))]
 
 
 def apply_filters(itins: list[Itinerary], req: SearchRequest) -> tuple[list[Itinerary], Counter]:
@@ -194,7 +208,6 @@ class SearchService:
         return [(o, d) for o in req.origins for d in destinations if o != d]
 
     async def _run_search(self, req: SearchRequest, key: str) -> str:
-        status = self.provider.status()
         warnings: list[str] = []
         routes = self._routes(req)
         budget = self.settings.max_provider_calls_per_search
@@ -210,6 +223,9 @@ class SearchService:
         if not req.destinations:
             warnings.append("Offene Zielsuche: geprüft werden die Drehkreuze " + ", ".join(d for _, d in routes[:10])
                             + ".")
+
+        if self.provider.supports_window:
+            return await self._run_window_search(req, key, routes, total, warnings)
 
         queries = [RoundTripQuery(origin=o, destination=d, departure_date=dep, return_date=ret, adults=req.adults,
                                   cabin_class=req.cabin_class, max_connections=req.max_stops,
@@ -250,19 +266,56 @@ class SearchService:
         stats = {"combinations_total": total * len(routes), "combinations_searched": len(queries),
                  "provider_calls": len(queries), "provider_errors": len(errors),
                  "offers_received": len(itineraries)}
+        return self._store(req, key, result_status, stats, warnings, itineraries)
+
+    async def _run_window_search(self, req: SearchRequest, key: str, routes: list[tuple[str, str]], total: int,
+                                 warnings: list[str]) -> str:
+        """Provider mit Zeitfenster-Suche (z. B. Travelpayouts): wenige Abfragen decken alle Datumspaare ab."""
+        warnings = [w for w in warnings if not w.startswith("Flexible Daten")]
+        sem = asyncio.Semaphore(self.settings.provider_concurrency)
+        errors: list[str] = []
+        calls = 0
+
+        async def run(origin: str, dest: str) -> list[Itinerary]:
+            nonlocal calls
+            q = WindowQuery(origin, dest, req.earliest_departure, req.latest_return, req.min_stay_days,
+                            req.max_stay_days, req.adults, req.max_stops, req.currency)
+            async with sem:
+                try:
+                    items, n = await self.provider.search_window(q)
+                    calls += n
+                    return items
+                except ProviderError as exc:
+                    calls += 1
+                    errors.append(str(exc))
+                    return []
+
+        batches = await asyncio.gather(*(run(o, d) for o, d in routes))
+        itineraries = [it for b in batches for it in b]
+        status = "provider_error" if errors and len(errors) == len(routes) else "partial" if errors else "ok"
+        for msg in dict.fromkeys(errors):
+            warnings.append(f"Provider-Fehler: {msg}")
+        if itineraries:
+            warnings.append("Preise sind zwischengespeicherte Richtwerte (bis ca. 7 Tage alt) – vor Buchung prüfen.")
+        stats = {"combinations_total": total * len(routes), "combinations_searched": total * len(routes),
+                 "provider_calls": calls, "provider_errors": len(errors), "offers_received": len(itineraries)}
+        return self._store(req, key, status, stats, warnings, itineraries)
+
+    def _store(self, req: SearchRequest, key: str, status: str, stats: dict, warnings: list[str],
+               itineraries: list[Itinerary]) -> str:
         row_id = uuid.uuid4().hex
         with self.session_factory() as session:
             row = SearchRequestRow(id=row_id, request_hash=key, request_json=req.model_dump(mode="json"),
-                                   provider=self.provider.name, provider_mode=status.mode, status=result_status,
-                                   stats_json=stats, warnings_json=warnings, created_at=datetime.now(UTC))
+                                   provider=self.provider.name, provider_mode=self.provider.status().mode,
+                                   status=status, stats_json=stats, warnings_json=warnings,
+                                   created_at=datetime.now(UTC))
             for it in itineraries:
                 row.results.append(SearchResultRow(itinerary_id=it.id, price_total=it.price.total,
                                                    currency=it.price.currency,
                                                    itinerary_json=it.model_dump(mode="json")))
             session.add(row)
             session.commit()
-        log.info("Suche %s: %d Abfragen, %d Angebote, Status %s", row_id, len(queries), len(itineraries),
-                 result_status)
+        log.info("Suche %s: %d Angebote, Status %s", row_id, len(itineraries), status)
         return row_id
 
     def _load_cached(self, key: str) -> SearchRequestRow | None:
@@ -301,8 +354,10 @@ class SearchService:
         if status in ("ok", "partial") and not kept:
             status = "no_results"
         stats = SearchStats(**row.stats_json, filtered_out=dict(removed))
-        return self._respond(row.id, req, kept, status, stats, warnings, cached=cached,
+        resp = self._respond(row.id, req, kept, status, stats, warnings, cached=cached,
                              generated_at=row.created_at)
+        resp.calendar = build_calendar(kept)
+        return resp
 
     def _respond(self, search_id: str, req: SearchRequest, itins: list[Itinerary], status: str,
                  stats: SearchStats, warnings: list[str], *, cached: bool,

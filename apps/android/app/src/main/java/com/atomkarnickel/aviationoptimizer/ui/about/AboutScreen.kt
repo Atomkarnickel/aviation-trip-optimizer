@@ -99,7 +99,8 @@ fun AboutScreen(vm: AboutViewModel = hiltViewModel()) {
                 KeyValue("Quellcode", "github.com/${info.repository}")
                 KeyValue("Lizenz", "MIT")
                 KeyValue("Datenschutz", "Kein Konto, kein Tracking. Favoriten, Logbuch und Einstellungen liegen lokal auf dem Gerät.")
-                KeyValue("Flugzeugtypen", "Laut Flugplan geplant, nicht garantiert.")
+                KeyValue("Flugdaten", "Kostenlose, geschätzte Preise (Travelpayouts/Aviasales); Typverlauf: OpenSky Network + hexdb.io.")
+                KeyValue("Flugzeugtypen", "Geplant bzw. historisch beobachtet, nie garantiert.")
             }
         }
     }

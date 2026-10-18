@@ -1,51 +1,60 @@
-# Deployment
+# Deployment (kostenlos)
+
+| Teil | Hosting | Kosten |
+|---|---|---|
+| Webversion | GitHub Pages | kostenlos (öffentliches Repo) |
+| APK | GitHub Releases | kostenlos |
+| CI/CD | GitHub Actions | kostenlos (öffentliches Repo) |
+| Backend | Render Free Web Service (Docker) | kostenlos – schläft nach ca. 15 min Inaktivität |
+| Datenbank | SQLite im Container | kostenlos – nur Cache, wird bei Neustart geleert |
 
 ## Webversion (GitHub Pages)
 
-- Workflow: `.github/workflows/deploy-web.yml` – bei jedem Push auf `main` (relevante Pfade), manuell und nach jedem stabilen Release.
-- Ablauf: `npm ci` → Typprüfung → Lint → Tests → statischer Produktionsbuild (`next build`, `output: export`) → Upload → Deploy → Erreichbarkeitsprüfung per HTTP. Schlägt ein Schritt fehl, wird nichts veröffentlicht.
-- Einrichtung (einmalig, bereits erledigt): *Settings → Pages → Source: GitHub Actions* bzw. `gh api -X POST repos/<owner>/<repo>/pages -f build_type=workflow`.
-- Die Web-App ist rein clientseitig. Sie spricht dasselbe Backend wie die Android-App an. Die Backend-URL kommt aus der Repository-Variable `API_BASE_URL` (Build-Zeit, kein Secret) oder wird vom Nutzer im Profil hinterlegt.
+- Workflow: `.github/workflows/deploy-web.yml` – bei Push auf `main` (relevante Pfade), manuell und nach jedem stabilen Release.
+- Ablauf: `npm ci` → Typprüfung → Lint → Tests → statischer Build → Upload → Deploy → HTTP-Erreichbarkeitsprüfung. Bei Fehlern wird nichts veröffentlicht.
+- Einrichtung (bereits erledigt): Pages-Quelle „GitHub Actions“; Release-Tags `v*` dürfen nach `github-pages` deployen.
+- Die Backend-URL kommt aus der Repository-Variable `API_BASE_URL` (öffentlich, kein Secret) oder wird im Profil hinterlegt.
 
-## Backend
+## Backend auf Render (kostenlos)
 
-Das Backend ist ein Docker-Container (`backend/Dockerfile`, Build-Kontext = Repository-Root). Datenbankmigrationen laufen beim Start automatisch (Alembic `upgrade head`).
+Warum SQLite: Die Datenbank enthält nur Caches (Suchergebnisse 15 min, OpenSky-Abflüge, Flugzeugregister) und die bei jedem Start neu geladenen Referenzdaten. Geht sie bei einem Neustart verloren, werden die Daten einfach neu abgefragt. Die kostenlose Render-Postgres-Datenbank läuft dagegen nach 30 Tagen ab und wird deshalb nicht genutzt.
 
-### Variante A: Render (Blueprint `render.yaml`)
+1. Konto auf <https://render.com> anlegen (kostenlos, ohne Zahlungsdaten für den Free-Tarif).
+2. *New → Blueprint* → dieses Repository → `render.yaml` übernehmen (Plan `free`).
+3. Im Dashboard die Secrets setzen: `TRAVELPAYOUTS_TOKEN`, optional `TRAVELPAYOUTS_MARKER`, `OPENSKY_CLIENT_ID`, `OPENSKY_CLIENT_SECRET` (siehe `docs/PROVIDERS.md`).
+4. Nach dem ersten Deploy prüfen: `https://<dienst>.onrender.com/api/v1/health` und `/docs`.
+5. URL als Voreinstellung für Web und APK hinterlegen:
+   ```bash
+   gh variable set API_BASE_URL --body https://<dienst>.onrender.com
+   gh workflow run "Deploy Web (GitHub Pages)"
+   ```
+   (Die APK übernimmt den Wert beim nächsten Release; Nutzer können die URL jederzeit im Profil ändern.)
 
-1. Konto bei <https://render.com> anlegen, Repository verbinden.
-2. *New → Blueprint* → `render.yaml` auswählen. Erstellt Web-Service + PostgreSQL.
-3. Im Dashboard das Secret `DUFFEL_ACCESS_TOKEN` setzen.
-4. Nach dem Deploy die URL (z. B. `https://aviation-trip-optimizer-api.onrender.com`) prüfen: `/api/v1/health`, `/docs`.
-5. URL als Repository-Variable setzen, damit Web und APK sie standardmäßig verwenden:
-   `gh variable set API_BASE_URL --body https://…` und Web-Deploy erneut auslösen (`gh workflow run "Deploy Web (GitHub Pages)"`).
+**Aufwachen:** Nach Inaktivität braucht die erste Anfrage 30–60 s. Web und Android zeigen dann „Backend wird gestartet …“ statt eines Fehlers; die Timeouts sind dafür auf 90 s ausgelegt.
 
-Hinweis: Kostenlose Render-Instanzen schlafen bei Inaktivität ein (erste Anfrage dauert länger); kostenlose Postgres-Instanzen sind zeitlich begrenzt – für Dauerbetrieb einen bezahlten Tarif wählen.
-
-### Variante B: beliebiger Container-Host (Fly.io, Railway, eigener Server)
+## Alternative: eigener Rechner / Container
 
 ```bash
 docker build -f backend/Dockerfile -t aviation-backend .
-docker run -p 8000:8000 \
-  -e DATABASE_URL=postgresql://user:pass@host:5432/aviation \
-  -e DUFFEL_ACCESS_TOKEN=duffel_test_... \
-  -e CORS_ORIGINS=https://atomkarnickel.github.io \
-  aviation-backend
+docker run -p 8000:8000 -e TRAVELPAYOUTS_TOKEN=... -e OPENSKY_CLIENT_ID=... -e OPENSKY_CLIENT_SECRET=... \
+  -e CORS_ORIGINS=https://atomkarnickel.github.io aviation-backend
 ```
 
-HTTPS terminiert der Hosting-Anbieter bzw. ein Reverse-Proxy. Die Apps akzeptieren nur HTTPS-Backends.
+Für Zugriff aus der Web-App braucht das Backend HTTPS (z. B. kostenloser Cloudflare-Tunnel).
 
-### Umgebungsvariablen
+## Umgebungsvariablen
 
-| Variable | Pflicht | Beschreibung |
-|---|---|---|
-| `DATABASE_URL` | prod | PostgreSQL-URL (`postgres://`/`postgresql://` werden normalisiert). Standard: SQLite-Datei |
-| `DUFFEL_ACCESS_TOKEN` | für Live-Suche | Duffel-Token. Ohne Token: Status `provider_not_configured` |
-| `DEMO_MODE` | nein | `true` = synthetische, gekennzeichnete Demodaten (nur Entwicklung/Vorführung) |
-| `CORS_ORIGINS` | ja | Kommagetrennte erlaubte Origins (z. B. die GitHub-Pages-Domain) |
-| `GITHUB_TOKEN` | nein | erhöht das GitHub-API-Limit für `/api/v1/releases` |
-| `SEARCH_RATE_LIMIT_PER_MINUTE` | nein | Standard 20 Suchen/Minute/IP |
-| `MAX_PROVIDER_CALLS_PER_SEARCH` | nein | Standard 24 |
-| `SEARCH_CACHE_TTL_SECONDS` | nein | Standard 900 |
-
-Für mehrere Instanzen sollten Rate-Limit und In-Flight-Deduplizierung auf Redis umgestellt werden (derzeit prozesslokal).
+| Variable | Beschreibung |
+|---|---|
+| `TRAVELPAYOUTS_TOKEN` | kostenlose Preisdaten (Standard-Provider) |
+| `TRAVELPAYOUTS_MARKER` | optional, Partner-ID für Aviasales-Links |
+| `OPENSKY_CLIENT_ID`, `OPENSKY_CLIENT_SECRET` | kostenloser OpenSky-API-Client für den Typverlauf |
+| `AIRCRAFT_HISTORY_ENABLED` | `false` schaltet den Typverlauf ab |
+| `DUFFEL_ACCESS_TOKEN` | optional (Sandbox kostenlos, echte Angebote nicht) |
+| `FLIGHT_PROVIDER` | `auto` (Standard), `travelpayouts`, `duffel`, `demo` |
+| `DEMO_MODE` | `true` = synthetische, gekennzeichnete Demodaten |
+| `DATABASE_URL` | Standard SQLite; PostgreSQL möglich |
+| `CORS_ORIGINS` | erlaubte Origins (GitHub-Pages-Domain) |
+| `GITHUB_TOKEN` | optional, höheres GitHub-API-Limit für `/api/v1/releases` |
+| `SEARCH_RATE_LIMIT_PER_MINUTE` | Standard 20 |
+| `AIRCRAFT_HISTORY_RATE_LIMIT_PER_MINUTE` | Standard 6 |

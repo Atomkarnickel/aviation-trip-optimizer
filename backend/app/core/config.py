@@ -39,8 +39,12 @@ class Settings(BaseSettings):
 
     database_url: str = f"sqlite:///{(BACKEND_DIR / 'dev.db').as_posix()}"
 
-    # Flugdaten-Provider. "auto" wählt Duffel, wenn ein Token gesetzt ist, sonst Demo (nur wenn DEMO_MODE=true).
+    # Flugdaten-Provider. "auto": Duffel (falls Token) -> Travelpayouts (falls Token, kostenlos) -> Demo (nur bei
+    # DEMO_MODE=true) -> keiner. Erzwingen mit FLIGHT_PROVIDER=duffel|travelpayouts|demo.
     flight_provider: str = "auto"
+    travelpayouts_token: str | None = None
+    travelpayouts_marker: str | None = None
+    travelpayouts_base_url: str = "https://api.travelpayouts.com"
     duffel_access_token: str | None = None
     duffel_base_url: str = "https://api.duffel.com"
     demo_mode: bool = False
@@ -51,6 +55,16 @@ class Settings(BaseSettings):
     max_provider_calls_per_search: int = 24
     max_offers_per_call: int = 40
     search_cache_ttl_seconds: int = 900
+
+    # Flugzeugtyp-Verlauf (kostenlos): OpenSky Network + hexdb.io. Ohne Zugangsdaten: anonymes Kontingent.
+    aircraft_history_enabled: bool = True
+    opensky_client_id: str | None = None
+    opensky_client_secret: str | None = None
+    opensky_base_url: str = "https://opensky-network.org/api"
+    opensky_token_url: str = ("https://auth.opensky-network.org/auth/realms/opensky-network/protocol/"
+                              "openid-connect/token")
+    hexdb_base_url: str = "https://hexdb.io"
+    aircraft_history_rate_limit_per_minute: int = 6
 
     github_repository: str = RELEASE_CONFIG.get("repository", "")
     github_token: str | None = None

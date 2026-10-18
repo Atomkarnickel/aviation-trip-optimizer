@@ -96,6 +96,8 @@ data class LegDto(
     val segments: List<SegmentDto>,
     val connections: List<ConnectionDto> = emptyList(),
     @SerialName("duration_minutes") val durationMinutes: Int,
+    @SerialName("details_complete") val detailsComplete: Boolean = true,
+    @SerialName("reported_stops") val reportedStops: Int? = null,
 )
 
 @Serializable
@@ -179,7 +181,48 @@ data class SearchResponseDto(
     val results: List<ScoredItineraryDto>,
     @SerialName("cheapest_total") val cheapestTotal: Double? = null,
     val stats: SearchStatsDto,
+    val calendar: List<CalendarCellDto> = emptyList(),
     val warnings: List<String> = emptyList(),
+)
+
+@Serializable
+data class CalendarCellDto(
+    @SerialName("departure_date") val departureDate: String,
+    val nights: Int,
+    @SerialName("min_price") val minPrice: Double,
+    val currency: String,
+    val offers: Int,
+    @SerialName("itinerary_id") val itineraryId: String,
+)
+
+@Serializable
+data class AircraftTypeShareDto(
+    @SerialName("aircraft_type_id") val aircraftTypeId: String? = null,
+    val name: String,
+    val count: Int,
+    val share: Double,
+)
+
+@Serializable
+data class AircraftObservationDto(
+    val date: String,
+    val callsign: String,
+    val icao24: String,
+    val registration: String? = null,
+    @SerialName("type_code") val typeCode: String? = null,
+)
+
+@Serializable
+data class AircraftHistoryDto(
+    val status: String,
+    val flight: String,
+    val callsign: String? = null,
+    val origin: String,
+    @SerialName("days_checked") val daysChecked: Int,
+    val observations: List<AircraftObservationDto> = emptyList(),
+    val distribution: List<AircraftTypeShareDto> = emptyList(),
+    val source: String = "",
+    val message: String? = null,
 )
 
 @Serializable

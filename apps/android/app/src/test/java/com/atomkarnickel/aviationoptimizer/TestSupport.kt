@@ -9,6 +9,8 @@ import com.atomkarnickel.aviationoptimizer.data.FavoritesStore
 import com.atomkarnickel.aviationoptimizer.data.SearchRepository
 import com.atomkarnickel.aviationoptimizer.data.SettingsStore
 import com.atomkarnickel.aviationoptimizer.data.local.AircraftPreferenceEntity
+import com.atomkarnickel.aviationoptimizer.data.remote.AircraftHistoryDto
+import com.atomkarnickel.aviationoptimizer.data.remote.AircraftTypeShareDto
 import com.atomkarnickel.aviationoptimizer.data.remote.CompareResponseDto
 import com.atomkarnickel.aviationoptimizer.data.remote.ExplanationDto
 import com.atomkarnickel.aviationoptimizer.data.remote.ItineraryDto
@@ -94,6 +96,16 @@ class FakeSearchRepository : SearchRepository {
     }
     override suspend fun compare(searchId: String, ids: List<String>): ApiResult<CompareResponseDto> =
         ApiResult.Failure(AppError(AppError.Kind.NOT_FOUND, "nicht verwendet"))
+
+    var historyCalls = 0
+    var historyResult: ApiResult<AircraftHistoryDto> = ApiResult.Success(
+        AircraftHistoryDto("ok", "LX 38", "SWR38", "ZRH", 5,
+            distribution = listOf(AircraftTypeShareDto("A343", "Airbus A340-300", 4, 0.8))),
+    )
+    override suspend fun aircraftHistory(carrier: String, flightNumber: String, origin: String): ApiResult<AircraftHistoryDto> {
+        historyCalls++
+        return historyResult
+    }
 }
 
 val emptyCatalog = AircraftCatalog("test", "2026-10-18", emptyList())

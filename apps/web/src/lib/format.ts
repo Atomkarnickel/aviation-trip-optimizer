@@ -35,7 +35,7 @@ export function bytes(n: number | null): string {
 export const PRICE_SOURCE_LABEL: Record<string, string> = {
   live_offer: "Live-Angebot",
   test_offer: "Testmodus – kein echter Preis",
-  estimated: "Schätzung – nicht buchbar",
+  estimated: "Geschätzt – zwischengespeicherter Preis (bis ca. 7 Tage alt)",
   demo: "DEMO – fiktive Daten",
 };
 
