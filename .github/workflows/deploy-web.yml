@@ -1,0 +1,75 @@
+name: Deploy Web (GitHub Pages)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/web/**"
+      - "VERSION"
+      - "shared/**"
+      - "backend/app/data/**"
+      - ".github/workflows/deploy-web.yml"
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - id: pages
+        uses: actions/configure-pages@v5
+      - name: Produktionsbuild
+        run: npm run build
+        env:
+          NEXT_PUBLIC_BASE_PATH: ${{ steps.pages.outputs.base_path }}
+          # Öffentliche Backend-URL (kein Secret). Leer = Nutzer hinterlegt sie im Profil.
+          NEXT_PUBLIC_API_BASE_URL: ${{ vars.API_BASE_URL }}
+      - run: touch out/.nojekyll
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: apps/web/out
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
+      - name: Deployment prüfen
+        env:
+          URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          set -euo pipefail
+          for i in 1 2 3 4 5 6; do
+            if curl -fsS "${URL}" -o page.html && grep -q "Aviation Trip Optimizer" page.html; then
+              curl -fsS "${URL}about/" -o about.html
+              echo "Webversion erreichbar: ${URL}"; exit 0
+            fi
+            sleep 15
+          done
+          echo "::error::Webversion unter ${URL} nicht erreichbar"; exit 1

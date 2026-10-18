@@ -1,0 +1,25 @@
+# Render Blueprint (https://render.com/docs/blueprint-spec) – optionales Hosting für das Backend.
+# Einrichtung: siehe docs/DEPLOYMENT.md. Geheimnisse (DUFFEL_ACCESS_TOKEN) im Render-Dashboard setzen.
+services:
+  - type: web
+    name: aviation-trip-optimizer-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: aviation-trip-optimizer-db
+          property: connectionString
+      - key: DUFFEL_ACCESS_TOKEN
+        sync: false
+      - key: CORS_ORIGINS
+        value: https://atomkarnickel.github.io
+      - key: DEMO_MODE
+        value: "false"
+databases:
+  - name: aviation-trip-optimizer-db
+    databaseName: aviation
