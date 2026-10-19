@@ -102,7 +102,7 @@ jobs:
           BT="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)"
           "$BT/apksigner" verify --verbose --print-certs "$APK" | tee "$RUNNER_TEMP/signature.txt"
           grep -q "Verified using v2 scheme (APK Signature Scheme v2): true" "$RUNNER_TEMP/signature.txt"
-          ACTUAL=$(grep -m1 "Signer #1 certificate SHA-256 digest" "$RUNNER_TEMP/signature.txt" | awk '{print $NF}')
+          ACTUAL=$(grep -m1 -E "Signer( #1|:) certificate SHA-256 digest" "$RUNNER_TEMP/signature.txt" | awk '{print $NF}')
           EXPECTED=$(echo "$EXPECTED_CERT" | tr -d ': ' | tr 'A-F' 'a-f')
           if [ "$ACTUAL" != "$EXPECTED" ]; then
             echo "::error::Signaturzertifikat ($ACTUAL) entspricht nicht dem erwarteten Release-Zertifikat. Updates wären nicht installierbar."; exit 1
@@ -123,7 +123,7 @@ jobs:
         run: |
           set -euo pipefail
           SHA=$(cut -d' ' -f1 "dist/$APK_NAME.sha256")
-          CERT=$(grep -m1 "Signer #1 certificate SHA-256 digest" "$RUNNER_TEMP/signature.txt" | awk '{print $NF}')
+          CERT=$(grep -m1 -E "Signer( #1|:) certificate SHA-256 digest" "$RUNNER_TEMP/signature.txt" | awk '{print $NF}')
           cat > "$RUNNER_TEMP/notes.md" <<EOF
           ## Android-APK
 

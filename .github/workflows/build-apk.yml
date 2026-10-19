@@ -58,7 +58,7 @@ jobs:
           BT="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)"
           "$BT/apksigner" verify --print-certs "$APK" | tee "$RUNNER_TEMP/sig.txt"
           if [ -n "$EXPECTED_CERT" ]; then
-            ACTUAL=$(grep -m1 "Signer #1 certificate SHA-256 digest" "$RUNNER_TEMP/sig.txt" | awk '{print $NF}')
+            ACTUAL=$(grep -m1 -E "Signer( #1|:) certificate SHA-256 digest" "$RUNNER_TEMP/sig.txt" | awk '{print $NF}')
             EXPECTED=$(echo "$EXPECTED_CERT" | tr -d ': ' | tr 'A-F' 'a-f')
             [ "$ACTUAL" = "$EXPECTED" ] || { echo "::error::Falsches Signaturzertifikat – Updates wären nicht installierbar."; exit 1; }
           fi
