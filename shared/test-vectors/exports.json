@@ -1,0 +1,153 @@
+{
+ "_comment": "Erzeugt von scripts/gen_export_vectors.py – nicht von Hand bearbeiten.",
+ "logbook": {
+  "airports": {
+   "ZRH": [
+    47.46,
+    8.55
+   ],
+   "FRA": [
+    50.03,
+    8.56
+   ],
+   "DXB": [
+    25.25,
+    55.36
+   ],
+   "SIN": [
+    1.36,
+    103.99
+   ],
+   "SFO": [
+    37.62,
+    -122.38
+   ]
+  },
+  "wishlist": [
+   "A380",
+   "B747",
+   "A340"
+  ],
+  "entries": [
+   {
+    "id": "a",
+    "date": "2026-09-01",
+    "status": "flown",
+    "airline": "LX",
+    "flight_number": "38",
+    "origin": "ZRH",
+    "destination": "SFO",
+    "aircraft_type_id": "A380",
+    "notes": "Oberdeck, \"toll\""
+   },
+   {
+    "id": "b",
+    "date": "2026-08-15",
+    "status": "flown",
+    "airline": "EK",
+    "flight_number": "88",
+    "origin": "ZRH",
+    "destination": "DXB",
+    "aircraft_type_id": "A380",
+    "notes": ""
+   },
+   {
+    "id": "c",
+    "date": "2026-07-01",
+    "status": "flown",
+    "airline": "LH",
+    "flight_number": "1196",
+    "origin": "FRA",
+    "destination": "ZRH",
+    "aircraft_type_id": "A320",
+    "notes": "kurz; aber gut"
+   },
+   {
+    "id": "d",
+    "date": "2026-12-20",
+    "status": "planned",
+    "airline": "SQ",
+    "flight_number": "345",
+    "origin": "ZRH",
+    "destination": "SIN",
+    "aircraft_type_id": "B777",
+    "notes": ""
+   },
+   {
+    "id": "e",
+    "date": "2026-05-05",
+    "status": "flown",
+    "airline": "",
+    "flight_number": "",
+    "origin": "",
+    "destination": "",
+    "aircraft_type_id": "B747",
+    "notes": "Rundflug\nmit Zeilenumbruch"
+   }
+  ],
+  "expected_stats": {
+   "flights": 4,
+   "planned": 1,
+   "types": 3,
+   "distance_km": 14430,
+   "unknown_distance": 1,
+   "longest": {
+    "id": "a",
+    "km": 9376
+   },
+   "top_types": [
+    {
+     "id": "A380",
+     "count": 2
+    },
+    {
+     "id": "A320",
+     "count": 1
+    },
+    {
+     "id": "B747",
+     "count": 1
+    }
+   ],
+   "wishlist_flown": [
+    "A380",
+    "B747"
+   ],
+   "wishlist_total": 3
+  },
+  "expected_csv": "date,status,airline,flight_number,origin,destination,aircraft_type_id,notes\r\n2026-09-01,flown,LX,38,ZRH,SFO,A380,\"Oberdeck, \"\"toll\"\"\"\r\n2026-08-15,flown,EK,88,ZRH,DXB,A380,\r\n2026-07-01,flown,LH,1196,FRA,ZRH,A320,kurz; aber gut\r\n2026-12-20,planned,SQ,345,ZRH,SIN,B777,\r\n2026-05-05,flown,,,,,B747,\"Rundflug\nmit Zeilenumbruch\"\r\n"
+ },
+ "ics": {
+  "calendar_name": "Reise ZRH → SFO (nicht gebucht)",
+  "now": "2026-10-19T05:00:00Z",
+  "flights": [
+   {
+    "uid": "it1-0",
+    "carrier": "LX",
+    "flight_number": "38",
+    "origin": "ZRH",
+    "destination": "SFO",
+    "departure_utc": "2026-12-18T12:10:00Z",
+    "arrival_utc": "2026-12-19T00:00:00Z",
+    "departure_local": "2026-12-18T13:10:00",
+    "arrival_local": "2026-12-18T16:00:00",
+    "aircraft": "Airbus A380",
+    "aircraft_status": "scheduled"
+   },
+   {
+    "uid": "it1-1",
+    "carrier": "LX",
+    "flight_number": "",
+    "origin": "SFO",
+    "destination": "ZRH",
+    "departure_utc": null,
+    "arrival_utc": null,
+    "departure_local": "2027-01-05T18:00:00",
+    "arrival_local": "2027-01-06T14:00:00",
+    "aircraft": null,
+    "aircraft_status": "unknown"
+   }
+  ],
+  "expected": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Aviation Trip Optimizer//DE\r\nCALSCALE:GREGORIAN\r\nMETHOD:PUBLISH\r\nX-WR-CALNAME:Reise ZRH → SFO (nicht gebucht)\r\nBEGIN:VEVENT\r\nUID:it1-0@aviation-trip-optimizer\r\nDTSTAMP:20261019T050000Z\r\nDTSTART:20261218T121000Z\r\nDTEND:20261219T000000Z\r\nSUMMARY:✈ LX 38 ZRH → SFO\r\nLOCATION:ZRH\r\nDESCRIPTION:Flugzeug: Airbus A380 (geplant\\, nicht garantiert)\\nNicht gebuc\r\n ht – Vorschlag aus Aviation Trip Optimizer. Vor der Buchung Zeiten und F\r\n lugzeugtyp bei der Airline prüfen.\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nUID:it1-1@aviation-trip-optimizer\r\nDTSTAMP:20261019T050000Z\r\nDTSTART:20270105T180000\r\nDTEND:20270106T140000\r\nSUMMARY:✈ LX SFO → ZRH\r\nLOCATION:SFO\r\nDESCRIPTION:Flugzeug: unbekannt\\nNicht gebucht – Vorschlag aus Aviation T\r\n rip Optimizer. Vor der Buchung Zeiten und Flugzeugtyp bei der Airline prü\r\n fen.\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
+ }
+}

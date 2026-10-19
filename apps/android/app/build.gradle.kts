@@ -101,7 +101,7 @@ android {
 
 // Flugzeugkatalog aus dem Backend (einzige Quelle der Wahrheit) als Asset bündeln.
 val syncSharedAssets by tasks.registering(Copy::class) {
-    from(repoRoot.resolve("backend/app/data/aircraft_types.json"))
+    from(repoRoot.resolve("backend/app/data/aircraft_types.json"), repoRoot.resolve("backend/app/data/airports.json"))
     into(layout.buildDirectory.dir("generated/sharedAssets"))
 }
 tasks.named("preBuild") { dependsOn(syncSharedAssets) }

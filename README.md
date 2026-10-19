@@ -29,7 +29,8 @@ Die APK ist für Android 8.0+ gedacht. Beim Öffnen fragt Android ggf. nach der 
 ## Webversion
 
 <!-- WEB-URL:START -->
-Die Webversion wird über GitHub Pages bereitgestellt; die Adresse steht hier, sobald das erste Deployment erfolgreich war.
+**<https://atomkarnickel.github.io/aviation-trip-optimizer/>** – läuft direkt im Browser; über „Zum Startbildschirm hinzufügen“ auch wie eine App installierbar.
+Für Flugsuchen braucht die Webversion ein erreichbares Backend (siehe [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)); Flugzeugkatalog, Logbuch und Versionsprüfung funktionieren auch ohne.
 <!-- WEB-URL:END -->
 
 ## Funktionen
@@ -43,7 +44,8 @@ Die Webversion wird über GitHub Pages bereitgestellt; die Adresse steht hier, s
 | Preiskalender | Heatmap: günstigster erhaltener Preis je Abflugtag × Aufenthaltsdauer; Klick filtert die Ergebnisse |
 | Typverlauf | pro Flugnummer: welche Flugzeugtypen sie in den letzten Tagen tatsächlich geflogen ist (OpenSky + hexdb.io) |
 | Flugzeuge | kuratierter Katalog (A380, 747, A340, A350, 787, A330, 757, ATR 72 …; historische Typen wie DC-10 nur als Katalogeintrag), persönliche Markierung (Wunschliste / geflogen / uninteressant) und eigene Coolness-Bewertung |
-| Favoriten & Logbuch | lokal gespeichert (Android: Room/DataStore, Web: localStorage), kein Konto nötig |
+| Favoriten & Logbuch | lokal gespeichert (Android: Room/DataStore, Web: localStorage), kein Konto nötig; Statistik (Flüge, Typen, Großkreis-km, längster Flug, Wunschliste-Fortschritt), CSV-Export/-Import |
+| Kalender | Reise als .ics übernehmen – ein Termin je Flug, klar als „nicht gebucht“ markiert |
 | About | installierte/laufende Version, neueste stabile APK (GitHub Releases API), Update-Status, direkter APK-Download mit Prüfsumme |
 
 **Ehrliche Daten:** Ohne konfigurierten Flugdaten-Provider zeigt die App keine Ergebnisse an, statt welche zu erfinden. Geschätzte, Demo- und Testdaten sind deutlich gekennzeichnet. Fehlende Angaben (Umsteigeflughafen, Flugzeugtyp) erscheinen als „unbekannt“. Flugzeugtypen gelten höchstens als *geplant* bzw. *historisch beobachtet*, nie als garantiert.
@@ -71,6 +73,8 @@ cd apps/web && npm ci && NEXT_PUBLIC_API_BASE_URL=http://localhost:8000 npm run 
 # Android
 cd apps/android && ./gradlew :app:assembleDebug
 ```
+
+Änderungen je Version: [CHANGELOG.md](CHANGELOG.md)
 
 Mehr: [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) · [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · [docs/RELEASING.md](docs/RELEASING.md) · [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) · [shared/RELEASE_METADATA.md](shared/RELEASE_METADATA.md)
 

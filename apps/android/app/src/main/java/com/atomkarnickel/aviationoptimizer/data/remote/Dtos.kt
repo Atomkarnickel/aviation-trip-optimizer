@@ -78,6 +78,8 @@ data class SegmentDto(
     @SerialName("aircraft_name") val aircraftName: String? = null,
     @SerialName("aircraft_type_id") val aircraftTypeId: String? = null,
     @SerialName("aircraft_status") val aircraftStatus: String = "unknown",
+    @SerialName("departure_utc") val departureUtc: String? = null,
+    @SerialName("arrival_utc") val arrivalUtc: String? = null,
 )
 
 @Serializable
@@ -282,3 +284,9 @@ data class AircraftTypeDto(
 
 @Serializable
 data class AircraftCatalogDto(val source: String, val updated: String, val types: List<AircraftTypeDto>)
+
+@Serializable
+data class AirportCoordinateDto(val iata: String, val lat: Double, val lon: Double)
+
+@Serializable
+data class AirportFileDto(val airports: List<AirportCoordinateDto>)

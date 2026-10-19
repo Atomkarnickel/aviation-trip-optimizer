@@ -7,6 +7,7 @@ import androidx.datastore.preferences.preferencesDataStore
 import androidx.room.Room
 import com.atomkarnickel.aviationoptimizer.BuildConfig
 import com.atomkarnickel.aviationoptimizer.data.AircraftCatalog
+import com.atomkarnickel.aviationoptimizer.data.AirportDirectory
 import com.atomkarnickel.aviationoptimizer.data.BackendSearchRepository
 import com.atomkarnickel.aviationoptimizer.data.DataStoreSettingsStore
 import com.atomkarnickel.aviationoptimizer.data.FavoritesStore
@@ -87,4 +88,7 @@ object AppModule {
 
     @Provides @Singleton
     fun catalog(@ApplicationContext context: Context, json: Json): AircraftCatalog = AircraftCatalog.load(context, json)
+
+    @Provides @Singleton
+    fun airports(@ApplicationContext context: Context, json: Json): AirportDirectory = AirportDirectory.load(context, json)
 }

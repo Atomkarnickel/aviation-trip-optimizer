@@ -1,5 +1,7 @@
 package com.atomkarnickel.aviationoptimizer.ui.logbook
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -23,6 +25,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -31,26 +34,69 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.atomkarnickel.aviationoptimizer.data.AircraftCatalog
+import com.atomkarnickel.aviationoptimizer.data.AirportDirectory
 import com.atomkarnickel.aviationoptimizer.data.FavoritesStore
 import com.atomkarnickel.aviationoptimizer.data.LogbookStore
 import com.atomkarnickel.aviationoptimizer.data.local.FlightLogEntryEntity
+import com.atomkarnickel.aviationoptimizer.domain.LogbookStats
+import com.atomkarnickel.aviationoptimizer.domain.LogbookTools
 import com.atomkarnickel.aviationoptimizer.ui.common.Format
+import com.atomkarnickel.aviationoptimizer.ui.common.KeyValue
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.time.LocalDate
+import javax.inject.Inject
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import java.time.LocalDate
-import javax.inject.Inject
 
 @HiltViewModel
 class LogbookViewModel @Inject constructor(
     private val store: LogbookStore,
     private val favorites: FavoritesStore,
     val catalog: AircraftCatalog,
+    airports: AirportDirectory,
 ) : ViewModel() {
     val entries: StateFlow<List<FlightLogEntryEntity>> = store.entries.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val stats: StateFlow<LogbookStats> = combine(store.entries, favorites.aircraftPreferences) { list, prefs ->
+        LogbookTools.stats(list, prefs.values.filter { it.status == "wishlist" }.map { it.aircraftTypeId }, airports.coordinates)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), LogbookTools.stats(emptyList(), emptyList(), emptyMap()))
+
+    private val _importMessage = MutableStateFlow<String?>(null)
+    val importMessage: StateFlow<String?> = _importMessage
+
+    fun exportCsv(): String = LogbookTools.toCsv(entries.value)
+
+    /** Importiert eine CSV-Datei (Format wie der Export); vorhandene identische Einträge werden übersprungen. */
+    fun importCsv(text: String?) {
+        if (text == null) { _importMessage.value = "Datei konnte nicht gelesen werden."; return }
+        if (text.length > 1_000_000) { _importMessage.value = "Datei zu groß (max. 1 MB)."; return }
+        val result = LogbookTools.parseLogbookCsv(text) { id -> catalog.get(id) != null }
+        viewModelScope.launch {
+            val fresh = LogbookTools.newEntries(store.entries.first(), result.entries)
+            fresh.forEach { store.add(it); markFlown(it) }
+            val skipped = result.entries.size - fresh.size
+            _importMessage.value = buildString {
+                append("${fresh.size} Einträge importiert")
+                if (skipped > 0) append(", $skipped bereits vorhanden")
+                if (result.errors.isNotEmpty()) append(", ${result.errors.size} Zeilen übersprungen:\n" + result.errors.take(5).joinToString("\n"))
+                else append(".")
+            }
+        }
+    }
+
+    fun dismissImportMessage() { _importMessage.value = null }
+
+    private suspend fun markFlown(entry: FlightLogEntryEntity) {
+        // Geflogene Typen automatisch markieren, sofern nicht bereits anders markiert.
+        if (entry.status != "flown") return
+        val existing = favorites.aircraftPreferences.first()[entry.aircraftTypeId]
+        if (existing == null || existing.status == "neutral") favorites.setAircraft(entry.aircraftTypeId, "flown", existing?.personalRating)
+    }
 
     /** Gibt eine Fehlermeldung zurück oder null bei Erfolg. */
     fun add(entry: FlightLogEntryEntity): String? {
@@ -60,11 +106,7 @@ class LogbookViewModel @Inject constructor(
         if (entry.destination.isNotEmpty() && !iata.matches(entry.destination)) return "Ziel als IATA-Code."
         viewModelScope.launch {
             store.add(entry)
-            // Geflogene Typen automatisch markieren, sofern nicht bereits anders markiert.
-            if (entry.status == "flown") {
-                val existing = favorites.aircraftPreferences.first()[entry.aircraftTypeId]
-                if (existing == null || existing.status == "neutral") favorites.setAircraft(entry.aircraftTypeId, "flown", existing?.personalRating)
-            }
+            markFlown(entry)
         }
         return null
     }
@@ -75,6 +117,15 @@ class LogbookViewModel @Inject constructor(
 @Composable
 fun LogbookScreen(vm: LogbookViewModel = hiltViewModel()) {
     val entries by vm.entries.collectAsStateWithLifecycle()
+    val stats by vm.stats.collectAsStateWithLifecycle()
+    val importMessage by vm.importMessage.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val exportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/csv")) { uri ->
+        if (uri != null) runCatching { context.contentResolver.openOutputStream(uri)?.use { it.write(vm.exportCsv().toByteArray(Charsets.UTF_8)) } }
+    }
+    val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) vm.importCsv(runCatching { context.contentResolver.openInputStream(uri)?.bufferedReader(Charsets.UTF_8)?.use { it.readText() } }.getOrNull())
+    }
     var date by rememberSaveable { mutableStateOf(LocalDate.now().toString()) }
     var flight by rememberSaveable { mutableStateOf("") }
     var airline by rememberSaveable { mutableStateOf("") }
@@ -89,9 +140,23 @@ fun LogbookScreen(vm: LogbookViewModel = hiltViewModel()) {
     LazyColumn(Modifier.fillMaxWidth(), contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
             Text("Flugzeuglogbuch", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.semantics { heading() })
-            val flown = entries.filter { it.status == "flown" }
-            Text("${flown.size} Flüge · ${flown.map { it.aircraftTypeId }.toSet().size} Flugzeugtypen", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                OutlinedButton(onClick = { exportLauncher.launch("logbuch-${LocalDate.now()}.csv") }, enabled = entries.isNotEmpty()) { Text("CSV exportieren") }
+                OutlinedButton(onClick = { importLauncher.launch(arrayOf("text/*", "application/csv", "application/octet-stream")) }) { Text("CSV importieren") }
+            }
         }
+        importMessage?.let { msg ->
+            item {
+                Card(Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(16.dp)) {
+                        Text("Import", style = MaterialTheme.typography.titleMedium)
+                        Text(msg)
+                        TextButton(onClick = vm::dismissImportMessage) { Text("OK") }
+                    }
+                }
+            }
+        }
+        item { StatsCard(stats, entries, vm.catalog) }
         item {
             Card(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -135,6 +200,34 @@ fun LogbookScreen(vm: LogbookViewModel = hiltViewModel()) {
                     }
                     OutlinedButton(onClick = { vm.delete(e.id) }) { Text("Löschen") }
                 }
+            }
+        }
+    }
+}
+
+private fun thousands(n: Long) = "%,d".format(n).replace(',', '\'')
+
+@Composable
+private fun StatsCard(stats: LogbookStats, entries: List<FlightLogEntryEntity>, catalog: AircraftCatalog) {
+    Card(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text("Statistik", style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })
+            KeyValue("Flüge", "${stats.flights}" + if (stats.planned > 0) " (+${stats.planned} geplant)" else "")
+            KeyValue("Flugzeugtypen", "${stats.types}")
+            KeyValue("Großkreisdistanz", "${thousands(stats.distanceKm)} km")
+            KeyValue("Wunschliste erfüllt", "${stats.wishlistFlown.size}/${stats.wishlistTotal}")
+            stats.longest?.let { l ->
+                entries.firstOrNull { it.id == l.entryId }?.let { e ->
+                    KeyValue("Längster Flug", "${e.origin} → ${e.destination} (${thousands(l.km)} km, ${catalog.name(e.aircraftTypeId)})")
+                }
+            }
+            if (stats.topTypes.isNotEmpty()) KeyValue("Häufigste Typen", stats.topTypes.joinToString(", ") { "${catalog.name(it.id)} (${it.count}×)" })
+            if (stats.wishlistFlown.isNotEmpty()) KeyValue("Von der Wunschliste", stats.wishlistFlown.joinToString(", ") { catalog.name(it) })
+            if (stats.unknownDistance > 0) {
+                Text(
+                    "${stats.unknownDistance} Flüge ohne bekannte Strecke sind in der Distanz nicht enthalten.",
+                    style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
         }
     }

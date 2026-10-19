@@ -6,6 +6,8 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Aviation Trip Optimizer",
   description: "Flugreisen nach Preis, Reisezeit, Aufenthaltsdauer und Flugzeugerlebnis optimieren.",
+  manifest: `${process.env.NEXT_PUBLIC_BASE_PATH || ""}/app.webmanifest`,
+  appleWebApp: { capable: true, title: "Trip Optimizer", statusBarStyle: "black-translucent" },
 };
 
 export const viewport: Viewport = {

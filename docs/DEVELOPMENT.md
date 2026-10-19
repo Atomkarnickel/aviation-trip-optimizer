@@ -42,3 +42,14 @@ echo "sdk.dir=/pfad/zum/android-sdk" > local.properties
 ```
 
 Debug-Builds haben die Paket-ID `com.atomkarnickel.aviationoptimizer.debug` und können parallel zur Release-App installiert werden.
+
+## Gemeinsame Testvektoren
+
+Logik, die auf Web und Android identisch sein muss, wird gegen Dateien in `shared/test-vectors/` getestet:
+
+| Datei | Inhalt | Erzeugt von |
+|---|---|---|
+| `semver.json` | Versionsvergleich, Update-Status | von Hand gepflegt |
+| `exports.json` | Logbuch-Statistik, Logbuch-CSV, Kalender-Export (.ics, byte-genau) | `python scripts/gen_export_vectors.py` (Python-Referenzimplementierung) |
+
+Nach einer Änderung an Statistik, CSV- oder ICS-Format zuerst die Referenz in `scripts/gen_export_vectors.py` anpassen, die Datei neu erzeugen und dann Web (`src/lib/exports.ts`) und Android (`domain/Exports.kt`) nachziehen. Der Backend-Test `test_export_vectors.py` schlägt fehl, wenn die Datei nicht zur Referenz passt.

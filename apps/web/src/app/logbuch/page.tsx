@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
-import { AIRCRAFT, aircraftName } from "@/lib/aircraft";
+import { useRef, useState, type ChangeEvent, type FormEvent } from "react";
+import { AIRCRAFT, aircraftById, aircraftName } from "@/lib/aircraft";
+import { downloadText, logbookStats, logbookToCsv, mergeLogbook, parseLogbookCsv } from "@/lib/exports";
 import { dateShort } from "@/lib/format";
 import { useLogbook, useSettings, type LogbookEntry } from "@/lib/settings";
 
@@ -12,6 +13,8 @@ export default function LogbookPage() {
   const [settings, setSettings] = useSettings();
   const [form, setForm] = useState(EMPTY);
   const [error, setError] = useState<string | null>(null);
+  const [importNote, setImportNote] = useState<{ text: string; errors: string[] } | null>(null);
+  const fileInput = useRef<HTMLInputElement>(null);
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
@@ -34,7 +37,26 @@ export default function LogbookPage() {
     setForm({ ...EMPTY, aircraftTypeId: form.aircraftTypeId });
   };
 
-  const flownTypes = new Set(entries.filter((e) => e.status === "flown").map((e) => e.aircraftTypeId));
+  const wishlist = Object.entries(settings.aircraftStatus).filter(([, st]) => st === "wishlist").map(([id]) => id);
+  const stats = logbookStats(entries, wishlist);
+  const longestEntry = stats.longest ? entries.find((e) => e.id === stats.longest!.id) : undefined;
+
+  const exportCsv = () => downloadText(`logbuch-${new Date().toISOString().slice(0, 10)}.csv`, "text/csv", logbookToCsv(entries));
+
+  const importCsv = async (ev: ChangeEvent<HTMLInputElement>) => {
+    const file = ev.target.files?.[0];
+    ev.target.value = "";
+    if (!file) return;
+    if (file.size > 1_000_000) return setImportNote({ text: "Datei zu groß (max. 1 MB).", errors: [] });
+    const result = parseLogbookCsv(await file.text(), (id) => Boolean(aircraftById(id)));
+    const { merged, added } = mergeLogbook(entries, result.entries);
+    setEntries(merged);
+    const skipped = result.entries.length - added;
+    setImportNote({
+      text: `${added} Einträge importiert${skipped ? `, ${skipped} bereits vorhanden` : ""}${result.errors.length ? `, ${result.errors.length} Zeilen übersprungen` : ""}.`,
+      errors: result.errors.slice(0, 10),
+    });
+  };
 
   return (
     <div className="stack">
@@ -44,10 +66,40 @@ export default function LogbookPage() {
           <p className="muted">Vergangene und geplante Flüge – lokal in diesem Browser gespeichert.</p>
         </div>
         <div className="row">
-          <span className="chip cool">{entries.filter((e) => e.status === "flown").length} Flüge</span>
-          <span className="chip cool">{flownTypes.size} Flugzeugtypen</span>
+          <button className="btn secondary small" type="button" onClick={exportCsv} disabled={entries.length === 0}>CSV exportieren</button>
+          <button className="btn secondary small" type="button" onClick={() => fileInput.current?.click()}>CSV importieren</button>
+          <input ref={fileInput} type="file" accept=".csv,text/csv" hidden onChange={importCsv} aria-label="CSV-Datei importieren" />
         </div>
       </div>
+
+      {importNote && (
+        <div className="banner info" role="status">
+          <div>
+            <strong>Import</strong>
+            {importNote.text}
+            {importNote.errors.length > 0 && <ul className="plain small">{importNote.errors.map((e) => <li key={e}>{e}</li>)}</ul>}
+          </div>
+        </div>
+      )}
+
+      <section className="panel" aria-labelledby="lb-stats">
+        <h2 id="lb-stats">Statistik</h2>
+        <div className="stats-grid">
+          <div className="stat"><span className="stat-value">{stats.flights}</span><span className="stat-label">Flüge</span></div>
+          <div className="stat"><span className="stat-value">{stats.types}</span><span className="stat-label">Flugzeugtypen</span></div>
+          <div className="stat"><span className="stat-value">{stats.distanceKm.toLocaleString("de-CH")} km</span><span className="stat-label">Großkreisdistanz</span></div>
+          <div className="stat"><span className="stat-value">{stats.wishlistFlown.length}/{stats.wishlistTotal}</span><span className="stat-label">Wunschliste erfüllt</span></div>
+        </div>
+        <ul className="plain small">
+          {longestEntry && stats.longest && (
+            <li>Längster Flug: {longestEntry.origin} → {longestEntry.destination} ({stats.longest.km.toLocaleString("de-CH")} km, {aircraftName(longestEntry.aircraftTypeId)})</li>
+          )}
+          {stats.topTypes.length > 0 && <li>Häufigste Typen: {stats.topTypes.map((t) => `${aircraftName(t.id)} (${t.count}×)`).join(", ")}</li>}
+          {stats.wishlistFlown.length > 0 && <li>Von der Wunschliste geflogen: {stats.wishlistFlown.map(aircraftName).join(", ")}</li>}
+          {stats.planned > 0 && <li>{stats.planned} geplante Flüge</li>}
+          {stats.unknownDistance > 0 && <li className="muted">{stats.unknownDistance} Flüge ohne bekannte Strecke sind in der Distanz nicht enthalten.</li>}
+        </ul>
+      </section>
 
       <form className="panel stack" onSubmit={submit} aria-label="Logbucheintrag hinzufügen" noValidate>
         <h2>Eintrag hinzufügen</h2>

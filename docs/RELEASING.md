@@ -2,12 +2,15 @@
 
 Ein Release besteht aus: signierter Android-APK + SHA-256-Prüfsumme als GitHub-Release-Assets, aktualisierter README-Downloadliste und deployter Webversion. Alles läuft über `.github/workflows/release.yml`, ausgelöst durch einen Tag `vX.Y.Z`.
 
-## 1. Version erhöhen
+## 1. Version erhöhen und Änderungen dokumentieren
 
 ```bash
-python scripts/bump_version.py patch      # oder minor | major | 1.4.0
+python scripts/bump_version.py patch      # oder minor | major | 1.4.0 (aktualisiert auch shared/openapi.json)
+# CHANGELOG.md: Abschnitt „## [X.Y.Z] – Datum“ ergänzen; die erste Zeile ist die Kurzbeschreibung
 git commit -am "chore: Version 1.0.1"
 ```
+
+Ohne CHANGELOG-Abschnitt für die Version bricht der Release-Workflow sofort ab. Der Abschnitt wird zu den Release-Notes; seine erste Zeile erscheint in der README-Downloadtabelle und im About-Bereich.
 
 `VERSION` ist die **einzige** Versionsquelle. Daraus leiten sich ab: Android `versionName`/`versionCode` (Gradle), Web-App-Version (next.config.mjs), Backend-Version, erwarteter Release-Tag. Das Skript verhindert nicht-monotone versionCodes.
 
@@ -31,7 +34,7 @@ Vorabversion: `git tag v1.1.0-beta.1` (VERSION muss `1.1.0` sein). Vorabversione
 
 ## 4. Was der Workflow tut
 
-1. Tag-Format und Übereinstimmung mit `VERSION` prüfen – sonst Abbruch.
+1. Tag-Format, Übereinstimmung mit `VERSION` und CHANGELOG-Eintrag prüfen – sonst Abbruch.
 2. Komplette CI (Backend, Web, Android) als wiederverwendbarer Workflow.
 3. Prüfen, dass alle Signier-Secrets vorhanden sind – **sonst Abbruch, keine unsignierte APK**.
 4. `testReleaseUnitTest` + `assembleRelease` mit Keystore aus Secrets.

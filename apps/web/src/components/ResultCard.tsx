@@ -4,6 +4,7 @@ import { useState } from "react";
 import { AircraftHistoryPanel } from "@/components/AircraftHistoryPanel";
 import { aircraftName } from "@/lib/aircraft";
 import type { ApiClient } from "@/lib/api";
+import { buildIcs, downloadText, itineraryCalendar } from "@/lib/exports";
 import { AIRCRAFT_STATUS_LABEL, PRICE_SOURCE_LABEL, dateShort, dateTime, duration, money, timeLocal } from "@/lib/format";
 import type { Leg, ScoredItinerary } from "@/lib/types";
 
@@ -189,6 +190,17 @@ export function ResultCard({ item, favorite, onToggleFavorite, compareSelected, 
           <input type="checkbox" checked={compareSelected} disabled={compareDisabled && !compareSelected} onChange={onToggleCompare} />
           Vergleichen
         </label>
+        <button
+          className="btn secondary small"
+          type="button"
+          title="Flüge als Kalenderdatei (.ics) speichern – die Reise ist damit nicht gebucht"
+          onClick={() => {
+            const cal = itineraryCalendar(it);
+            downloadText(`reise-${it.origin}-${it.destination}-${it.outbound_date}.ics`, "text/calendar", buildIcs(cal.name, cal.flights));
+          }}
+        >
+          📅 Kalender
+        </button>
         <span style={{ flex: 1 }} />
         {it.booking_options.length > 0 ? (
           it.booking_options.map((b) => (

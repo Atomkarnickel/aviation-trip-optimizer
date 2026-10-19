@@ -55,9 +55,11 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.atomkarnickel.aviationoptimizer.data.AircraftCatalog
+import com.atomkarnickel.aviationoptimizer.data.itineraryCalendar
 import com.atomkarnickel.aviationoptimizer.data.remote.CompareResponseDto
 import com.atomkarnickel.aviationoptimizer.data.remote.LegDto
 import com.atomkarnickel.aviationoptimizer.data.remote.ScoredItineraryDto
+import com.atomkarnickel.aviationoptimizer.domain.CalendarExport
 import com.atomkarnickel.aviationoptimizer.domain.SearchField
 import com.atomkarnickel.aviationoptimizer.domain.SearchForm
 import com.atomkarnickel.aviationoptimizer.ui.common.Banner
@@ -65,6 +67,7 @@ import com.atomkarnickel.aviationoptimizer.ui.common.BannerKind
 import com.atomkarnickel.aviationoptimizer.ui.common.Format
 import com.atomkarnickel.aviationoptimizer.ui.common.KeyValue
 import com.atomkarnickel.aviationoptimizer.ui.common.Tag
+import com.atomkarnickel.aviationoptimizer.ui.common.openCalendarFile
 import com.atomkarnickel.aviationoptimizer.ui.theme.Demo
 
 @Composable
@@ -391,6 +394,10 @@ fun ResultCard(
                     Checkbox(checked = inCompare, onCheckedChange = { onCompare() })
                     Text("Vergleichen")
                 }
+                OutlinedButton(onClick = {
+                    val (name, flights) = itineraryCalendar(it, catalog)
+                    openCalendarFile(context, "reise-${it.origin}-${it.destination}-${it.outboundDate}.ics", CalendarExport.build(name, flights))
+                }) { Text("📅 Kalender") }
                 if (it.bookingOptions.isEmpty()) {
                     AssistChip(onClick = {}, enabled = false, label = { Text(if (it.isDemo) "Demo – nicht buchbar" else "Kein verifizierter Buchungslink") })
                 } else it.bookingOptions.forEach { b ->

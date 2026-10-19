@@ -15,6 +15,7 @@ import com.atomkarnickel.aviationoptimizer.data.remote.AircraftCatalogDto
 import com.atomkarnickel.aviationoptimizer.data.remote.AircraftHistoryDto
 import com.atomkarnickel.aviationoptimizer.data.remote.AircraftPreferenceDto
 import com.atomkarnickel.aviationoptimizer.data.remote.AircraftTypeDto
+import com.atomkarnickel.aviationoptimizer.data.remote.AirportFileDto
 import com.atomkarnickel.aviationoptimizer.data.remote.BackendApi
 import com.atomkarnickel.aviationoptimizer.data.remote.CompareRequestDto
 import com.atomkarnickel.aviationoptimizer.data.remote.CompareResponseDto
@@ -28,6 +29,7 @@ import com.atomkarnickel.aviationoptimizer.data.remote.SearchResponseDto
 import com.atomkarnickel.aviationoptimizer.data.remote.UserPreferencesDto
 import com.atomkarnickel.aviationoptimizer.data.remote.ValidationErrorDto
 import com.atomkarnickel.aviationoptimizer.data.remote.WeightsDto
+import com.atomkarnickel.aviationoptimizer.domain.CalendarFlight
 import com.atomkarnickel.aviationoptimizer.domain.ReleaseCheck
 import com.atomkarnickel.aviationoptimizer.domain.ReleaseRules
 import kotlinx.coroutines.CancellationException
@@ -300,6 +302,32 @@ class AircraftCatalog(val source: String, val updated: String, val types: List<A
         }
     }
 }
+
+// ================================================================ Flughafenkoordinaten (Asset aus backend/app/data)
+
+class AirportDirectory(val coordinates: Map<String, Pair<Double, Double>>) {
+    companion object {
+        fun load(context: Context, json: Json): AirportDirectory = try {
+            val text = context.assets.open("airports.json").bufferedReader().use { it.readText() }
+            AirportDirectory(json.decodeFromString<AirportFileDto>(text).airports.associate { it.iata to (it.lat to it.lon) })
+        } catch (e: Exception) {
+            AirportDirectory(emptyMap())
+        }
+    }
+}
+
+/** Kalendertermine (je Segment) für eine Reise – die Reise ist damit nicht gebucht. */
+fun itineraryCalendar(it: ItineraryDto, catalog: AircraftCatalog): Pair<String, List<CalendarFlight>> =
+    "Reise ${it.origin} → ${it.destination} (nicht gebucht)" to it.legs.flatMapIndexed { l, leg ->
+        leg.segments.mapIndexed { i, s ->
+            CalendarFlight(
+                uid = "${it.id}-$l-$i", carrier = s.marketingCarrier, flightNumber = s.flightNumber, origin = s.origin,
+                destination = s.destination, departureUtc = s.departureUtc, arrivalUtc = s.arrivalUtc,
+                departureLocal = s.departureLocal, arrivalLocal = s.arrivalLocal,
+                aircraft = s.aircraftTypeId?.let { id -> catalog.name(id) } ?: s.aircraftName, aircraftStatus = s.aircraftStatus,
+            )
+        }
+    }
 
 /** Baut die Präferenzen für das Backend aus Einstellungen + Room-Markierungen. */
 fun buildPreferences(settings: AppSettings, aircraft: Map<String, AircraftPreferenceEntity>): UserPreferencesDto =
