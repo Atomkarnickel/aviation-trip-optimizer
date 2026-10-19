@@ -6,6 +6,7 @@ Aufruf: python scripts/bump_version.py 1.2.0   |   python scripts/bump_version.p
 
 from __future__ import annotations
 
+import json
 import re
 import sys
 from pathlib import Path
@@ -33,7 +34,13 @@ def main() -> None:
         raise SystemExit(f"Ungültige Version: {new}")
     if version_code(new) <= version_code(current):
         raise SystemExit(f"Neue Version {new} muss größer als {current} sein (versionCode streng monoton).")
-    (ROOT / "VERSION").write_text(new + "\n", encoding="utf-8")
+    (ROOT / "VERSION").write_text(new + "\n", encoding="utf-8", newline="\n")
+    # Die OpenAPI-Spezifikation enthält die Version (info.version) – im selben Format wie der Export in CI
+    spec_path = ROOT / "shared" / "openapi.json"
+    spec = json.loads(spec_path.read_text(encoding="utf-8"))
+    spec["info"]["version"] = new
+    with spec_path.open("w", encoding="utf-8", newline="\n") as f:
+        json.dump(spec, f, ensure_ascii=False, indent=1)
     print(f"VERSION: {current} -> {new} (versionCode {version_code(new)}). Tag: v{new}")
 
 
