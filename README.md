@@ -9,9 +9,9 @@ Flugreisen planen wie ein Flugzeugenthusiast: Die App sucht nicht nur den günst
 ## APK herunterladen
 
 <!-- APK-DOWNLOADS:START -->
-**Neueste stabile Version: 1.0.2** (19.10.2026)
+**Neueste stabile Version: 1.1.0** (19.10.2026)
 
-➡️ **[aviation-optimizer-1.0.2.apk herunterladen](https://github.com/Atomkarnickel/aviation-trip-optimizer/releases/download/v1.0.2/aviation-optimizer-1.0.2.apk)** · [SHA-256](https://github.com/Atomkarnickel/aviation-trip-optimizer/releases/download/v1.0.2/aviation-optimizer-1.0.2.apk.sha256)
+➡️ **[aviation-optimizer-1.1.0.apk herunterladen](https://github.com/Atomkarnickel/aviation-trip-optimizer/releases/download/v1.1.0/aviation-optimizer-1.1.0.apk)** · [SHA-256](https://github.com/Atomkarnickel/aviation-trip-optimizer/releases/download/v1.1.0/aviation-optimizer-1.1.0.apk.sha256)
 
 Immer aktuelle Release-Seite: <https://github.com/Atomkarnickel/aviation-trip-optimizer/releases/latest>
 
@@ -19,6 +19,7 @@ Immer aktuelle Release-Seite: <https://github.com/Atomkarnickel/aviation-trip-op
 
 | Version | Veröffentlicht | Download | Änderungen |
 |---|---|---|---|
+| [1.1.0](https://github.com/Atomkarnickel/aviation-trip-optimizer/releases/tag/v1.1.0) | 19.10.2026 | [aviation-optimizer-1.1.0.apk](https://github.com/Atomkarnickel/aviation-trip-optimizer/releases/download/v1.1.0/aviation-optimizer-1.1.0.apk) | Logbuch-Statistik, CSV-Export/-Import, Reisen in den Kalender übernehmen und Webversion als App installierbar. |
 | [1.0.2](https://github.com/Atomkarnickel/aviation-trip-optimizer/releases/tag/v1.0.2) | 19.10.2026 | [aviation-optimizer-1.0.2.apk](https://github.com/Atomkarnickel/aviation-trip-optimizer/releases/download/v1.0.2/aviation-optimizer-1.0.2.apk) | Android-APK |
 
 _Dieser Abschnitt wird nach jedem Release automatisch erzeugt (scripts/update_readme.py)._
