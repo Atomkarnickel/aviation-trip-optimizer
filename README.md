@@ -9,9 +9,19 @@ Flugreisen planen wie ein Flugzeugenthusiast: Die App sucht nicht nur den günst
 ## APK herunterladen
 
 <!-- APK-DOWNLOADS:START -->
-Noch kein stabiles Release mit APK veröffentlicht. Sobald ein Release existiert, steht hier automatisch der direkte Downloadlink.
+**Neueste stabile Version: 1.0.2** (19.10.2026)
 
-Alle Releases: <https://github.com/Atomkarnickel/aviation-trip-optimizer/releases>
+➡️ **[aviation-optimizer-1.0.2.apk herunterladen](https://github.com/Atomkarnickel/aviation-trip-optimizer/releases/download/v1.0.2/aviation-optimizer-1.0.2.apk)** · [SHA-256](https://github.com/Atomkarnickel/aviation-trip-optimizer/releases/download/v1.0.2/aviation-optimizer-1.0.2.apk.sha256)
+
+Immer aktuelle Release-Seite: <https://github.com/Atomkarnickel/aviation-trip-optimizer/releases/latest>
+
+### Die fünf neuesten stabilen Releases
+
+| Version | Veröffentlicht | Download | Änderungen |
+|---|---|---|---|
+| [1.0.2](https://github.com/Atomkarnickel/aviation-trip-optimizer/releases/tag/v1.0.2) | 19.10.2026 | [aviation-optimizer-1.0.2.apk](https://github.com/Atomkarnickel/aviation-trip-optimizer/releases/download/v1.0.2/aviation-optimizer-1.0.2.apk) | Android-APK |
+
+_Dieser Abschnitt wird nach jedem Release automatisch erzeugt (scripts/update_readme.py)._
 <!-- APK-DOWNLOADS:END -->
 
 Die APK ist für Android 8.0+ gedacht. Beim Öffnen fragt Android ggf. nach der Erlaubnis „Unbekannte Apps installieren“ – die Installation bestätigst du selbst. Prüfsumme (SHA-256) und Signaturzertifikat stehen in jedem Release.
