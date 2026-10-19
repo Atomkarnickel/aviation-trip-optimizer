@@ -100,7 +100,7 @@ def main() -> int:
         print("README aktuell." if updated == text else "README veraltet.")
         return 0 if updated == text else 2
     if updated != text:
-        readme.write_text(updated, encoding="utf-8")
+        readme.write_text(updated, encoding="utf-8", newline="\n")
         print(f"README aktualisiert ({len(releases)} Release(s), alle Links geprüft).")
     else:
         print("README bereits aktuell.")
