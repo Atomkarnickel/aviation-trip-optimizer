@@ -7,9 +7,19 @@ Alles kostenlos, ohne Konto, ohne API-Schlüssel.
 ## APK herunterladen
 
 <!-- APK-DOWNLOADS:START -->
-Noch kein stabiles Release mit APK veröffentlicht. Sobald ein Release existiert, steht hier automatisch der direkte Downloadlink.
+**Neueste stabile Version: 2.0.0** (23.10.2026)
 
-Alle Releases: <https://github.com/Atomkarnickel/aviation-trip-optimizer/releases>
+➡️ **[overhead-2.0.0.apk herunterladen](https://github.com/Atomkarnickel/aviation-trip-optimizer/releases/download/v2.0.0/overhead-2.0.0.apk)** · [SHA-256](https://github.com/Atomkarnickel/aviation-trip-optimizer/releases/download/v2.0.0/overhead-2.0.0.apk.sha256)
+
+Immer aktuelle Release-Seite: <https://github.com/Atomkarnickel/aviation-trip-optimizer/releases/latest>
+
+### Die fünf neuesten stabilen Releases
+
+| Version | Veröffentlicht | Download | Änderungen |
+|---|---|---|---|
+| [2.0.0](https://github.com/Atomkarnickel/aviation-trip-optimizer/releases/tag/v2.0.0) | 23.10.2026 | [overhead-2.0.0.apk](https://github.com/Atomkarnickel/aviation-trip-optimizer/releases/download/v2.0.0/overhead-2.0.0.apk) | Neue App „Overhead“: Homescreen-Widget mit Mini-Radar, Live-Liste und Karte der Flugzeuge über dir – ersetzt den Flugplaner. |
+
+_Dieser Abschnitt wird nach jedem Release automatisch erzeugt (scripts/update_readme.py)._
 <!-- APK-DOWNLOADS:END -->
 
 **Installation:** APK auf dem Handy öffnen → ggf. „Unbekannte Apps installieren“ für Browser/Dateimanager erlauben → installieren. Updates installieren sich über die alte Version (alle APKs sind mit demselben Schlüssel signiert), Einstellungen bleiben erhalten. Android 8.0 oder neuer.
