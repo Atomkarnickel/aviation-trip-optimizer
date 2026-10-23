@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="navy">#0B1A33</color>
+    <color name="window_light">#F4F7FB</color>
+    <color name="preview_surface">#0F1F3A</color>
+    <color name="preview_text">#E6EEFB</color>
+    <color name="preview_muted">#9FB3D1</color>
+</resources>

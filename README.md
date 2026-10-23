@@ -1,101 +1,73 @@
-# Aviation Trip Optimizer
+# Overhead – Flugzeuge über dir
 
-Flugreisen planen wie ein Flugzeugenthusiast: Die App sucht nicht nur den günstigsten Flug, sondern die beste Kombination aus **Preis, Reisezeit, Aufenthaltsdauer, Routing, Airline und Flugzeugerlebnis** – inklusive transparenter Begründung, warum eine Reise empfohlen wird und was der A380 oder die 747 tatsächlich mehr kostet.
+Eine kleine Android-App im Stil von Flightradar24, gebaut um **ein Homescreen-Widget**: Es zeigt, welche Flugzeuge gerade über dir fliegen – mit Mini-Radar, Typ, Rufzeichen, Route, Entfernung, Richtung und Höhe. In der App gibt es dazu eine **Liste als Zusammenfassung** und – per Wischen – eine **Karte**.
 
-- **Android-App** (Kotlin, Jetpack Compose, Material 3) – signierte APK über GitHub Releases
-- **Webversion** (Next.js, TypeScript) – direkt im Browser, responsiv
-- **Backend** (Python, FastAPI) – Flugsuche, Bewertung, Flugzeugkatalog, Release-Metadaten
+Alles kostenlos, ohne Konto, ohne API-Schlüssel.
 
 ## APK herunterladen
 
 <!-- APK-DOWNLOADS:START -->
-**Neueste stabile Version: 1.1.0** (19.10.2026)
+Noch kein stabiles Release mit APK veröffentlicht. Sobald ein Release existiert, steht hier automatisch der direkte Downloadlink.
 
-➡️ **[aviation-optimizer-1.1.0.apk herunterladen](https://github.com/Atomkarnickel/aviation-trip-optimizer/releases/download/v1.1.0/aviation-optimizer-1.1.0.apk)** · [SHA-256](https://github.com/Atomkarnickel/aviation-trip-optimizer/releases/download/v1.1.0/aviation-optimizer-1.1.0.apk.sha256)
-
-Immer aktuelle Release-Seite: <https://github.com/Atomkarnickel/aviation-trip-optimizer/releases/latest>
-
-### Die fünf neuesten stabilen Releases
-
-| Version | Veröffentlicht | Download | Änderungen |
-|---|---|---|---|
-| [1.1.0](https://github.com/Atomkarnickel/aviation-trip-optimizer/releases/tag/v1.1.0) | 19.10.2026 | [aviation-optimizer-1.1.0.apk](https://github.com/Atomkarnickel/aviation-trip-optimizer/releases/download/v1.1.0/aviation-optimizer-1.1.0.apk) | Logbuch-Statistik, CSV-Export/-Import, Reisen in den Kalender übernehmen und Webversion als App installierbar. |
-| [1.0.2](https://github.com/Atomkarnickel/aviation-trip-optimizer/releases/tag/v1.0.2) | 19.10.2026 | [aviation-optimizer-1.0.2.apk](https://github.com/Atomkarnickel/aviation-trip-optimizer/releases/download/v1.0.2/aviation-optimizer-1.0.2.apk) | Erstes veröffentlichtes Release der Android-App. |
-
-_Dieser Abschnitt wird nach jedem Release automatisch erzeugt (scripts/update_readme.py)._
+Alle Releases: <https://github.com/Atomkarnickel/aviation-trip-optimizer/releases>
 <!-- APK-DOWNLOADS:END -->
 
-Die APK ist für Android 8.0+ gedacht. Beim Öffnen fragt Android ggf. nach der Erlaubnis „Unbekannte Apps installieren“ – die Installation bestätigst du selbst. Prüfsumme (SHA-256) und Signaturzertifikat stehen in jedem Release.
+**Installation:** APK auf dem Handy öffnen → ggf. „Unbekannte Apps installieren“ für Browser/Dateimanager erlauben → installieren. Updates installieren sich über die alte Version (alle APKs sind mit demselben Schlüssel signiert), Einstellungen bleiben erhalten. Android 8.0 oder neuer.
 
-## Webversion
+**Vorher den Flugplaner installiert?** Overhead (ab 2.0.0) ersetzt ihn: Die APK installiert sich als Update über den alten „Aviation Trip Optimizer“ – danach gibt es nur noch die neue App. Die Releases 1.x auf der Release-Seite gehören zum eingestellten Flugplaner.
 
-<!-- WEB-URL:START -->
-**<https://atomkarnickel.github.io/aviation-trip-optimizer/>** – läuft direkt im Browser; über „Zum Startbildschirm hinzufügen“ auch wie eine App installierbar.
-Für Flugsuchen braucht die Webversion ein erreichbares Backend (siehe [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)); Flugzeugkatalog, Logbuch und Versionsprüfung funktionieren auch ohne.
-<!-- WEB-URL:END -->
+**Widget hinzufügen:** lange auf den Startbildschirm drücken → *Widgets* → *Overhead* → auf den Bildschirm ziehen. Oder in der App: *Einstellungen → Widget zum Startbildschirm hinzufügen*.
 
 ## Funktionen
 
 | Bereich | Umfang |
 |---|---|
-| Suche | mehrere Abflughäfen, feste oder offene Ziele (mehrere), flexibler Zeitraum (z. B. 18.12.–06.01.) mit automatisch geplanten Datumskombinationen, min./max. Reisedauer, Reisende, Budget, Wunschflugzeuge, bevorzugte/ausgeschlossene Airlines, max. Umstiege, max. Reisezeit, Abflugzeitfenster, Kabine, Gepäckbedarf |
-| Optimierung | Modi **Best Value**, **Aircraft Hunter**, **Cheapest Trip**; frei einstellbare Gewichtung (Preis, Flugzeug, Reisezeit, Umstiege, Aufenthalt, Airline, Komfort) mit Neubewertung ohne neue Suche |
-| Ergebnisse | Gesamtpreis + Bestandteile, Daten, Airline/Flugnummer, Umstiege mit Risiko, Reise- und Aufenthaltsdauer, Flugzeugtyp je Segment (geplant/bestätigt), Score-Aufschlüsselung, Begründung, Kompromisse, Wunschflugzeug-Aufpreis, bessere Preis-Leistungs-Alternative, Unsicherheiten, Datenaktualität, Buchungslink (offizielle Airline-Website) |
-| Vergleich | 2–4 Reisen nebeneinander, bester Wert je Kriterium markiert |
-| Preiskalender | Heatmap: günstigster erhaltener Preis je Abflugtag × Aufenthaltsdauer; Klick filtert die Ergebnisse |
-| Typverlauf | pro Flugnummer: welche Flugzeugtypen sie in den letzten Tagen tatsächlich geflogen ist (OpenSky + hexdb.io) |
-| Flugzeuge | kuratierter Katalog (A380, 747, A340, A350, 787, A330, 757, ATR 72 …; historische Typen wie DC-10 nur als Katalogeintrag), persönliche Markierung (Wunschliste / geflogen / uninteressant) und eigene Coolness-Bewertung |
-| Favoriten & Logbuch | lokal gespeichert (Android: Room/DataStore, Web: localStorage), kein Konto nötig; Statistik (Flüge, Typen, Großkreis-km, längster Flug, Wunschliste-Fortschritt), CSV-Export/-Import |
-| Kalender | Reise als .ics übernehmen – ein Termin je Flug, klar als „nicht gebucht“ markiert |
-| About | installierte/laufende Version, neueste stabile APK (GitHub Releases API), Update-Status, direkter APK-Download mit Prüfsumme |
+| Widget | 3 Größen (klein, breit, groß). Mini-Radar: du in der Mitte, Norden oben, Rand = Suchradius, Farbe nach Höhe (gelb < 3 000 m, türkis < 8 000 m, blau darüber, rot = Notfall-Squawk). Daneben die nächsten Flugzeuge: Typ · Rufzeichen, Route oder Airline, Richtung, Entfernung, Höhe mit Steig-/Sinkpfeil. ⟳-Knopf aktualisiert sofort, Tipp auf eine Zeile öffnet die Details. |
+| Liste | Alle Flugzeuge im Umkreis (10/25/50/100 km), nächstes zuerst, mit Blickrichtung (Pfeil + Himmelsrichtung) und Höhenwinkel über dem Horizont. |
+| Karte | Wischen nach links: Karte mit gedrehten Flugzeugsymbolen, Rufzeichen, deinem Standort und Radius. Tipp auf ein Flugzeug zeigt Details, langer Druck setzt einen festen Standort. |
+| Details | Foto (planespotters.net, mit Fotograf), Route mit Prüfung gegen die aktuelle Position, „Wo am Himmel?“ (Blickrichtung, Winkel, Entfernung), Geschwindigkeit, Kurs, Steigrate, Squawk, Link zum Flugverlauf. |
+| Aktualisierung | In der App alle 10 Sekunden. Widget im Hintergrund alle 15/30/60 Minuten oder nur manuell (Android erlaubt nicht öfter). |
+| Ausfallsicherheit | Fällt adsb.lol aus, wird automatisch adsb.fi gefragt. Ohne Netz bleibt der letzte Stand sichtbar und wird als „offline“ markiert. |
+| Über | Installierte Version, neueste Version auf GitHub, direkter APK-Download mit SHA-256. |
 
-**Ehrliche Daten:** Ohne konfigurierten Flugdaten-Provider zeigt die App keine Ergebnisse an, statt welche zu erfinden. Geschätzte, Demo- und Testdaten sind deutlich gekennzeichnet. Fehlende Angaben (Umsteigeflughafen, Flugzeugtyp) erscheinen als „unbekannt“. Flugzeugtypen gelten höchstens als *geplant* bzw. *historisch beobachtet*, nie als garantiert.
+## Datenquellen – alle kostenlos
 
-## Datenquellen – komplett kostenlos
+| Zweck | Quelle | Hinweis |
+|---|---|---|
+| Live-Positionen | [adsb.lol](https://adsb.lol) (ODbL 1.0), Ersatz: [adsb.fi](https://adsb.fi) Open Data | Freiwilligen-Empfängernetz, kein API-Schlüssel |
+| Routen & Flughäfen | [hexdb.io](https://hexdb.io) | Datenbank nach Rufzeichen – kann veraltet sein, wird daher gegen die Position geprüft |
+| Fotos | [planespotters.net](https://www.planespotters.net) | mit Fotografennennung und Link |
+| Karte | [OpenFreeMap](https://openfreemap.org) + MapLibre | © OpenMapTiles, Daten © OpenStreetMap-Mitwirkende |
 
-| Zweck | Quelle |
-|---|---|
-| Preise | Travelpayouts / Aviasales Data API (kostenlos, zwischengespeicherte Preise → als **geschätzt** gekennzeichnet) |
-| Flugzeugtyp-Verlauf | OpenSky Network (kostenloses Konto) + hexdb.io |
-| Hosting | GitHub Pages (Web), GitHub Releases (APK), Render Free (Backend, SQLite) |
+**Grenzen:** ADS-B-Abdeckung hängt von freiwilligen Empfängern ab; manche Flugzeuge (Militär, Privatflüge, Gebiete ohne Empfänger) fehlen. Routen stammen aus einer Rufzeichen-Datenbank und sind nicht garantiert – unplausible Routen werden im Widget ausgeblendet und in den Details als „vermutlich veraltet“ markiert.
 
-Optional: Duffel (Sandbox kostenlos). Die Amadeus Self-Service APIs wurden im Juli 2026 abgeschaltet. Details und Einrichtung: [docs/PROVIDERS.md](docs/PROVIDERS.md), [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+## Standort und Datenschutz
 
-## Schnellstart
+- Kein Konto, kein Tracking, keine Werbung.
+- Standort: aktueller Gerätestandort oder ein fester Ort (langer Druck auf die Karte). Kein Google-Play-Dienst nötig.
+- Das Widget nutzt im Hintergrund den aktuellen Standort nur, wenn du „Immer erlauben“ wählst – sonst den zuletzt in der App ermittelten.
+- An die Flugdatendienste geht nur ein auf ca. 1 km gerundeter Punkt; Entfernungen rechnet die App auf dem Gerät.
+- Keine Cloud-Sicherung der App-Daten.
+
+## Entwicklung
 
 ```bash
-# Backend mit Demodaten (klar gekennzeichnet)
-cd backend && python -m venv .venv && .venv/Scripts/pip install -r requirements-dev.txt
-DEMO_MODE=true .venv/Scripts/uvicorn app.main:app --reload        # http://localhost:8000/docs
-
-# Web
-cd apps/web && npm ci && NEXT_PUBLIC_API_BASE_URL=http://localhost:8000 npm run dev
-
-# Android
-cd apps/android && ./gradlew :app:assembleDebug
+./gradlew :app:testDebugUnitTest :app:lintDebug   # Tests + Lint
+./gradlew :app:assembleDebug                      # Debug-APK
+python -m unittest discover -s scripts/tests       # Tests der Release-Skripte
 ```
 
-Änderungen je Version: [CHANGELOG.md](CHANGELOG.md)
+Bauen ohne lokale Android-Installation, Signierung und Release-Ablauf: siehe [BUILD.md](BUILD.md). Änderungen je Version: [CHANGELOG.md](CHANGELOG.md).
 
-Mehr: [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) · [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · [docs/RELEASING.md](docs/RELEASING.md) · [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) · [shared/RELEASE_METADATA.md](shared/RELEASE_METADATA.md)
-
-## Projektstruktur
-
-```
-VERSION                 einzige Versionsquelle (SemVer)
-backend/                FastAPI-Backend, Provider, Bewertung, Alembic, Tests, Dockerfile
-apps/web/               Next.js-Webversion (statischer Export für GitHub Pages)
-apps/android/           Android-App (Kotlin, Compose, Hilt, Room, DataStore, Retrofit)
-shared/                 OpenAPI-Spezifikation, Release-Konfiguration, gemeinsame Testvektoren
-scripts/                README-Generator, Versions-Bump
-docs/                   Architektur, Provider, Release, Deployment, Entwicklung
-.github/workflows/      CI, Release (APK), Web-Deployment
-```
-
-## Datenschutz
-
-Keine Konten, kein Tracking. Favoriten, Logbuch und Einstellungen bleiben auf dem Gerät bzw. im Browser. An das Backend gehen nur Suchparameter und Präferenzen. API-Schlüssel liegen ausschließlich im Backend.
+| Pfad | Inhalt |
+|---|---|
+| `app/src/main/java/.../domain` | reine Logik: Geometrie (Entfernung, Richtung, Höhenwinkel), Formatierung, Widget-Inhalt, Versionsregeln |
+| `app/src/main/java/.../data` | ADS-B-Quellen mit Ersatzquelle, Routen-Cache, Standort, Einstellungen, letzter Abruf |
+| `app/src/main/java/.../widget` | Glance-Widget, Mini-Radar |
+| `app/src/main/java/.../ui` | Compose-Oberfläche: Liste, Karte (MapLibre), Details, Einstellungen, Über |
+| `app/src/main/assets` | ICAO-Typcodes → Namen, Airline-Kennungen → Namen |
+| `scripts/` | README-Downloadliste, Changelog-Auszug, Versionssprung |
 
 ## Lizenz
 
-MIT – siehe [LICENSE](LICENSE). Flugzeug- und Airline-Namen sind Marken ihrer Inhaber; es werden keine Flugzeugbilder ohne Nutzungserlaubnis verwendet.
+MIT – siehe [LICENSE](LICENSE). Flugzeug- und Airline-Namen sind Marken ihrer Inhaber.

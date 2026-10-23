@@ -1,9 +1,0 @@
-{
-  "appName": "Aviation Trip Optimizer",
-  "repository": "Atomkarnickel/aviation-trip-optimizer",
-  "apkAssetPrefix": "aviation-optimizer-",
-  "apkAssetSuffix": ".apk",
-  "checksumAssetSuffix": ".apk.sha256",
-  "releaseTagPrefix": "v",
-  "releaseCacheSeconds": 900
-}

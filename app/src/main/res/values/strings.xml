@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Overhead</string>
+    <string name="widget_name">Flugzeuge über dir</string>
+    <string name="widget_description">Zeigt, welche Flugzeuge gerade über dir fliegen – mit Mini-Radar, Typ, Route, Höhe und Richtung.</string>
+    <string name="widget_preview_title">3 Flugzeuge über dir</string>
+    <string name="widget_preview_row">Airbus A321neo · EZY73HP</string>
+    <string name="widget_preview_detail">↗ NO · 4,2 km · 9 750 m</string>
+</resources>

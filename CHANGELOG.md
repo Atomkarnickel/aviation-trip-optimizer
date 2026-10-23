@@ -1,35 +1,21 @@
 # Änderungsprotokoll
 
 Format: [Keep a Changelog](https://keepachangelog.com/de/1.1.0/), Versionierung: [SemVer](https://semver.org/lang/de/).
-Die erste Zeile jedes Abschnitts erscheint als Kurzbeschreibung in der README-Downloadtabelle und im About-Bereich.
+Die erste Zeile jedes Abschnitts erscheint als Kurzbeschreibung in der README-Downloadtabelle und in der App unter „Über“.
 
-## [1.1.0] – 2026-10-19
+## [2.0.0] – 2026-10-24
 
-Logbuch-Statistik, CSV-Export/-Import, Reisen in den Kalender übernehmen und Webversion als App installierbar.
+Neue App „Overhead“: Homescreen-Widget mit Mini-Radar, Live-Liste und Karte der Flugzeuge über dir – ersetzt den Flugplaner.
 
 ### Neu
-- **Logbuch-Statistik** (Web und Android): Flüge, Flugzeugtypen, geflogene Großkreisdistanz, längster Flug, häufigste Typen und Fortschritt der Wunschliste.
-- **Logbuch als CSV exportieren und importieren** (Web und Android). Doppelte Einträge werden beim Import übersprungen, fehlerhafte Zeilen mit Zeilennummer gemeldet.
-- **Reise in den Kalender** (.ics, ein Termin je Flug, Web und Android). Termine sind klar als „nicht gebucht“ gekennzeichnet; der Flugzeugtyp erscheint mit seinem Status (geplant/bestätigt).
-- **Webversion installierbar** („Zum Startbildschirm hinzufügen“) über ein Web-App-Manifest mit Icon.
+- **Widget „Flugzeuge über dir“** in drei Größen: Mini-Radar (Norden oben, Farbe nach Höhe), die nächsten Flugzeuge mit Typ, Rufzeichen, Route, Entfernung, Richtung und Höhe; Aktualisieren-Knopf; Tipp auf eine Zeile öffnet die Details.
+- **Liste** aller Flugzeuge im Umkreis (10–100 km), nächstes zuerst, mit Blickrichtung und Höhenwinkel über dem Horizont.
+- **Karte** per Wischen: OpenFreeMap-Karte mit Flugzeugsymbolen (gedreht nach Kurs), deinem Standort und Suchradius; langer Druck legt einen festen Standort fest.
+- **Details** mit Foto (planespotters.net), Route inkl. Plausibilitätsprüfung gegen die aktuelle Position, Geschwindigkeit, Steigrate, Squawk und Link zum Flugverlauf.
+- Live-Aktualisierung alle 10 s in der App, im Hintergrund alle 15/30/60 min oder nur manuell.
+- Automatischer Wechsel zur Ersatzquelle (adsb.fi), wenn adsb.lol nicht erreichbar ist; bei Ausfall bleibt der letzte Stand sichtbar und wird als „offline“ markiert.
+- Versionsprüfung und APK-Download unter „Über“.
+- Alles kostenlos und ohne Konto: adsb.lol, adsb.fi, hexdb.io, planespotters.net, OpenFreeMap.
 
-### Verbessert
-- Web und Android rechnen nachweislich identisch: gemeinsame Testvektoren (`shared/test-vectors/exports.json`) aus einer Python-Referenzimplementierung.
-- Release-Notes und README-Tabelle enthalten jetzt die Änderungen aus diesem Protokoll.
-- GitHub Actions auf aktuelle Hauptversionen aktualisiert (keine veralteten Node-Laufzeiten mehr), Runner fest auf Ubuntu 24.04.
-
-## [1.0.2] – 2026-10-19
-
-Erstes veröffentlichtes Release der Android-App.
-
-### Behoben
-- Release-Prüfung des Signaturzertifikats unterstützt das neue Ausgabeformat von `apksigner`.
-- Versionssprung aktualisiert auch die Version in der OpenAPI-Spezifikation.
-
-## [1.0.1] – 2026-10-19
-
-Nicht veröffentlicht (Release-Prüfung schlug fehl, behoben in 1.0.2).
-
-## [1.0.0] – 2026-10-18
-
-Nicht veröffentlicht (Release-Prüfung schlug fehl, behoben in 1.0.2). Enthält den ursprünglichen Funktionsumfang: Suche mit flexiblen Daten, drei Optimierungsmodi, Flugzeugkatalog und Wunschliste, Preiskalender, Typverlauf, Favoriten, Logbuch, About-Bereich mit Updateprüfung.
+### Entfernt
+- Der Flugplaner (Aviation Trip Optimizer 1.x) mit Backend und Webversion ist eingestellt. Die App installiert sich als Update über die alte Version und ersetzt sie.

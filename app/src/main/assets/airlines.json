@@ -1,0 +1,22 @@
+{
+ "source": "Kuratierte Liste: ICAO-Airline-Kennung (erste drei Buchstaben des Rufzeichens) → Name.",
+ "airlines": {
+  "DLH": "Lufthansa", "CLH": "Lufthansa CityLine", "LHX": "Lufthansa City Airlines", "GEC": "Lufthansa Cargo", "SWR": "SWISS", "AUA": "Austrian Airlines",
+  "EWG": "Eurowings", "EWE": "Eurowings Europe", "EDW": "Edelweiss Air", "OAW": "Helvetic Airways", "BEL": "Brussels Airlines", "CFG": "Condor",
+  "BAW": "British Airways", "CFE": "BA CityFlyer", "SHT": "British Airways", "VIR": "Virgin Atlantic", "EXS": "Jet2", "LOG": "Loganair", "TOM": "TUI Airways",
+  "AFR": "Air France", "HOP": "Air France HOP", "KLM": "KLM", "KLC": "KLM Cityhopper", "TRA": "Transavia", "TVF": "Transavia France",
+  "EZY": "easyJet", "EJU": "easyJet Europe", "EZS": "easyJet Switzerland", "RYR": "Ryanair", "RUK": "Ryanair UK", "MAY": "Malta Air", "LDA": "Lauda Europe",
+  "WZZ": "Wizz Air", "WMT": "Wizz Air Malta", "WUK": "Wizz Air UK", "VOE": "Volotea", "VLG": "Vueling", "IBE": "Iberia", "IBS": "Iberia Express", "AEA": "Air Europa",
+  "TAP": "TAP Air Portugal", "ITY": "ITA Airways", "SAS": "SAS", "NOZ": "Norwegian", "NSZ": "Norwegian", "FIN": "Finnair", "ICE": "Icelandair", "BTI": "airBaltic",
+  "LOT": "LOT Polish Airlines", "CSA": "Czech Airlines", "TVS": "Smartwings", "AEE": "Aegean Airlines", "ROT": "TAROM", "LGL": "Luxair", "TUI": "TUIfly", "JAF": "TUI fly Belgium",
+  "THY": "Turkish Airlines", "PGT": "Pegasus", "SXS": "SunExpress", "AJA": "AJet", "ELY": "El Al", "MSR": "EgyptAir", "RAM": "Royal Air Maroc", "ETH": "Ethiopian Airlines", "KQA": "Kenya Airways", "SAA": "South African Airways",
+  "UAE": "Emirates", "QTR": "Qatar Airways", "ETD": "Etihad Airways", "SVA": "Saudia", "GFA": "Gulf Air", "OMA": "Oman Air", "FDB": "flydubai", "KAC": "Kuwait Airways",
+  "UAL": "United Airlines", "AAL": "American Airlines", "DAL": "Delta Air Lines", "ACA": "Air Canada", "WJA": "WestJet", "TSC": "Air Transat", "JBU": "JetBlue",
+  "SIA": "Singapore Airlines", "CPA": "Cathay Pacific", "JAL": "Japan Airlines", "ANA": "All Nippon Airways", "KAL": "Korean Air", "AAR": "Asiana Airlines",
+  "CCA": "Air China", "CES": "China Eastern", "CSN": "China Southern", "CHH": "Hainan Airlines", "AIC": "Air India", "THA": "Thai Airways", "MAS": "Malaysia Airlines", "VNA": "Vietnam Airlines",
+  "QFA": "Qantas", "ANZ": "Air New Zealand", "TAM": "LATAM Brasil", "LAN": "LATAM", "AVA": "Avianca", "AMX": "Aeroméxico",
+  "FDX": "FedEx", "UPS": "UPS Airlines", "BCS": "DHL (EAT Leipzig)", "DHK": "DHL Air UK", "DHX": "DHL International", "CLX": "Cargolux", "GTI": "Atlas Air", "CKS": "Kalitta Air", "MPH": "Martinair Cargo", "ABR": "ASL Airlines Ireland",
+  "NJE": "NetJets Europe", "EJA": "NetJets", "VJT": "VistaJet", "LXJ": "Flexjet", "GAC": "GlobeAir",
+  "SAZ": "Rega (Schweizerische Rettungsflugwacht)", "SUI": "Schweizer Luftwaffe", "GAF": "Luftwaffe", "RCH": "US Air Force (Reach)"
+ }
+}

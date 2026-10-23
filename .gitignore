@@ -1,25 +1,26 @@
-# Allgemein
-.DS_Store
-Thumbs.db
-*.log
-.env
-.env.*
-!.env.example
+# Build
+build/
+.gradle/
+.kotlin/
+local.properties
+*.apk
+*.aab
+dist/
+captures/
+.externalNativeBuild/
+.cxx/
 
-# Python
-__pycache__/
-*.pyc
-.venv/
-*.db
-.pytest_cache/
-.ruff_cache/
+# IDE
+.idea/
+*.iml
+.vscode/
 
 # Signierung – niemals committen
 *.jks
 *.keystore
 signing.env
+.env
 
-# Build-Artefakte (APKs gehören in GitHub Releases, nicht in die Git-Historie)
-dist/
-*.apk
-*.aab
+# Python
+__pycache__/
+.venv/
